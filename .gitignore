@@ -1,0 +1,48 @@
+# Datasets
+data/raw/*
+!data/raw/.gitkeep
+data/interim/*
+!data/interim/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/samples/*
+!data/samples/.gitkeep
+
+# Trained weights
+*.pt
+*.pth
+*.onnx
+
+# Generated images
+outputs/predictions/*
+!outputs/predictions/.gitkeep
+outputs/visualizations/*
+!outputs/visualizations/.gitkeep
+
+# Kaggle credentials and secrets
+kaggle.json
+# .env.*
+# .env.*
+
+# Notebook outputs
+.ipynb_checkpoints/
+
+# Large experiment artifacts
+outputs/metrics/*
+!outputs/metrics/.gitkeep
+outputs/models/*
+!outputs/models/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+
+# Build artifacts
+*.egg-info/
+build/
+dist/
+
+.env
