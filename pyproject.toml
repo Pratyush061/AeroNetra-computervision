@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aeronetra"
+version = "0.1.0"
+description = "A serious computer-vision research project for UAV and drone-based surveillance."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "AeroNetra Team" }
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
