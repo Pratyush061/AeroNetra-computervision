@@ -1,14 +1,16 @@
 import numpy as np
-from src.aeronetra.detection.types import BoundingBox, Detection
+
+from src.aeronetra.counting.drawing import draw_detections, draw_roi
 from src.aeronetra.counting.ops import (
+    apply_nms,
+    clip_box,
     convert_xywh_to_xyxy,
     convert_yolo_to_xyxy,
-    clip_box,
     filter_by_area,
     filter_by_roi,
-    apply_nms
 )
-from src.aeronetra.counting.drawing import draw_detections, draw_roi
+from src.aeronetra.detection.types import BoundingBox, Detection
+
 
 def test_convert_xywh_to_xyxy():
     assert convert_xywh_to_xyxy(10, 20, 30, 40) == (10, 20, 40, 60)
@@ -97,9 +99,10 @@ def test_filtering_logic():
     assert pred.detections[0].class_name == "car"
 
 def test_export_utilities(tmp_path):
-    from src.aeronetra.counting.drawing import export_to_json, export_to_csv
-    import json
     import csv
+    import json
+
+    from src.aeronetra.counting.drawing import export_to_csv, export_to_json
 
     b1 = BoundingBox(10, 10, 50, 50)
     d1 = Detection(b1, 0, "car", 0.9)
@@ -107,7 +110,7 @@ def test_export_utilities(tmp_path):
     json_path = tmp_path / "test.json"
     export_to_json([d1], json_path)
 
-    with open(json_path, 'r') as f:
+    with open(json_path) as f:
         data = json.load(f)
         assert len(data) == 1
         assert data[0]["class_name"] == "car"
@@ -115,7 +118,7 @@ def test_export_utilities(tmp_path):
     csv_path = tmp_path / "test.csv"
     export_to_csv([d1], csv_path)
 
-    with open(csv_path, 'r') as f:
+    with open(csv_path) as f:
         reader = csv.reader(f)
         rows = list(reader)
         assert len(rows) == 2

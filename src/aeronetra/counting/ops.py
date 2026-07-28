@@ -1,16 +1,18 @@
 """
 OpenCV bounding box conversions, clipping, filtering, and NMS logic.
 """
-from typing import List, Tuple, Optional
+
 import cv2
 import numpy as np
+
 from src.aeronetra.detection.types import BoundingBox, Detection
 
-def convert_xywh_to_xyxy(x: float, y: float, w: float, h: float) -> Tuple[float, float, float, float]:
+
+def convert_xywh_to_xyxy(x: float, y: float, w: float, h: float) -> tuple[float, float, float, float]:
     """Converts top-left xywh to xyxy."""
     return (x, y, x + w, y + h)
 
-def convert_yolo_to_xyxy(xc: float, yc: float, nw: float, nh: float, img_w: int, img_h: int) -> Tuple[float, float, float, float]:
+def convert_yolo_to_xyxy(xc: float, yc: float, nw: float, nh: float, img_w: int, img_h: int) -> tuple[float, float, float, float]:
     """Converts normalized YOLO to absolute xyxy."""
     w = nw * img_w
     h = nh * img_h
@@ -27,7 +29,7 @@ def clip_box(box: BoundingBox, img_w: int, img_h: int) -> BoundingBox:
         ymax=max(0.0, min(float(img_h), box.ymax))
     )
 
-def filter_by_area(detections: List[Detection], min_area: float, max_area: Optional[float] = None) -> List[Detection]:
+def filter_by_area(detections: list[Detection], min_area: float, max_area: float | None = None) -> list[Detection]:
     """Filters detections based on minimum and maximum area."""
     valid = []
     for d in detections:
@@ -36,7 +38,7 @@ def filter_by_area(detections: List[Detection], min_area: float, max_area: Optio
             valid.append(d)
     return valid
 
-def filter_by_aspect_ratio(detections: List[Detection], min_ratio: float, max_ratio: float) -> List[Detection]:
+def filter_by_aspect_ratio(detections: list[Detection], min_ratio: float, max_ratio: float) -> list[Detection]:
     """Filters detections by aspect ratio (width/height)."""
     valid = []
     for d in detections:
@@ -47,7 +49,7 @@ def filter_by_aspect_ratio(detections: List[Detection], min_ratio: float, max_ra
                 valid.append(d)
     return valid
 
-def filter_by_roi(detections: List[Detection], roi_xyxy: Tuple[float, float, float, float]) -> List[Detection]:
+def filter_by_roi(detections: list[Detection], roi_xyxy: tuple[float, float, float, float]) -> list[Detection]:
     """Filters detections whose centers fall within the Region of Interest (xmin, ymin, xmax, ymax)."""
     rx1, ry1, rx2, ry2 = roi_xyxy
     valid = []
@@ -57,7 +59,7 @@ def filter_by_roi(detections: List[Detection], roi_xyxy: Tuple[float, float, flo
             valid.append(d)
     return valid
 
-def apply_nms(detections: List[Detection], iou_threshold: float) -> List[Detection]:
+def apply_nms(detections: list[Detection], iou_threshold: float) -> list[Detection]:
     """
     Applies traditional Non-Maximum Suppression using OpenCV.
     Avoid double-applying if the model adapter already provides end-to-end filtered predictions.
@@ -84,7 +86,7 @@ def apply_nms(detections: List[Detection], iou_threshold: float) -> List[Detecti
     indices = np.array(indices).flatten()
     return [detections[i] for i in indices]
 
-def count_vehicles(detections: List[Detection]) -> Tuple[int, dict]:
+def count_vehicles(detections: list[Detection]) -> tuple[int, dict]:
     """Returns total count and per-class count of detections."""
     total = len(detections)
     class_counts = {}

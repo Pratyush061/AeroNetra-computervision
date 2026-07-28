@@ -1,6 +1,14 @@
-import pytest
 from pathlib import Path
-from src.aeronetra.datasets.visdrone import parse_visdrone_row, map_category, convert_to_yolo_format, convert_dataset
+
+import pytest
+
+from src.aeronetra.datasets.visdrone import (
+    convert_dataset,
+    convert_to_yolo_format,
+    map_category,
+    parse_visdrone_row,
+)
+
 
 def test_parse_visdrone_row():
     # Valid row
@@ -74,7 +82,7 @@ def test_convert_dataset(tmp_path):
     out_lbl = tmp_path / "labels" / "0000001.txt"
     assert out_lbl.exists()
 
-    with open(out_lbl, 'r') as f:
+    with open(out_lbl) as f:
         lines = f.readlines()
         assert len(lines) == 2 # Two valid annotations
         # Merged mode means class ID should be 0

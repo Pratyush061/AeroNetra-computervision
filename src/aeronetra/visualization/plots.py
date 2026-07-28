@@ -1,11 +1,12 @@
 """
 Reusable plotting utilities for dataset exploration and validation.
 """
-from typing import Dict, List
-import matplotlib.pyplot as plt
 from pathlib import Path
 
-def plot_class_distribution(class_counts: Dict[int, int], class_names: Dict[int, str], output_path: Path):
+import matplotlib.pyplot as plt
+
+
+def plot_class_distribution(class_counts: dict[int, int], class_names: dict[int, str], output_path: Path):
     """Plots a bar chart of class distributions."""
     classes = sorted(class_counts.keys())
     counts = [class_counts[c] for c in classes]
@@ -27,7 +28,7 @@ def plot_class_distribution(class_counts: Dict[int, int], class_names: Dict[int,
     plt.savefig(output_path)
     plt.close()
 
-def plot_size_distribution(sizes: List[int], title: str, xlabel: str, output_path: Path, bins: int = 50):
+def plot_size_distribution(sizes: list[int], title: str, xlabel: str, output_path: Path, bins: int = 50):
     """Plots a histogram of object sizes (width, height, area)."""
     plt.figure(figsize=(10, 6))
     plt.hist(sizes, bins=bins, color='coral', edgecolor='black')
@@ -39,7 +40,7 @@ def plot_size_distribution(sizes: List[int], title: str, xlabel: str, output_pat
     plt.savefig(output_path)
     plt.close()
 
-def plot_objects_per_image(counts_per_image: List[int], output_path: Path):
+def plot_objects_per_image(counts_per_image: list[int], output_path: Path):
     """Plots histogram of number of objects per image."""
     plt.figure(figsize=(10, 6))
     plt.hist(counts_per_image, bins=range(min(counts_per_image or [0]), max(counts_per_image or [1]) + 2, 1), color='lightgreen', edgecolor='black', align='left')

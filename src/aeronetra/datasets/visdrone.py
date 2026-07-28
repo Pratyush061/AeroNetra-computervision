@@ -2,10 +2,10 @@
 VisDrone dataset parsing and conversion utilities.
 Converts standard VisDrone annotations to YOLO format.
 """
-from pathlib import Path
-from typing import Dict, Tuple, Optional
-import cv2
 import os
+from pathlib import Path
+
+import cv2
 
 # Original VisDrone Classes:
 # 0: ignored regions, 1: pedestrian, 2: people, 3: bicycle, 4: car, 5: van
@@ -21,7 +21,7 @@ VISDRONE_VEHICLE_CLASSES = {
     10: "motor"
 }
 
-def parse_visdrone_row(row_str: str) -> Optional[Dict[str, int]]:
+def parse_visdrone_row(row_str: str) -> dict[str, int] | None:
     """
     Parses a single row from a VisDrone annotation file.
     Format: <bbox_left>,<bbox_top>,<bbox_width>,<bbox_height>,<score>,<object_category>,<truncation>,<occlusion>
@@ -43,7 +43,7 @@ def parse_visdrone_row(row_str: str) -> Optional[Dict[str, int]]:
     except ValueError:
         return None
 
-def map_category(category: int, mode: str = "separate") -> Optional[int]:
+def map_category(category: int, mode: str = "separate") -> int | None:
     """
     Maps VisDrone category to project class ID.
     Returns None if category is ignored.
@@ -66,7 +66,7 @@ def map_category(category: int, mode: str = "separate") -> Optional[int]:
         return mapping.get(category)
     return None
 
-def convert_to_yolo_format(box: Dict[str, int], img_width: int, img_height: int) -> Optional[Tuple[float, float, float, float]]:
+def convert_to_yolo_format(box: dict[str, int], img_width: int, img_height: int) -> tuple[float, float, float, float] | None:
     """
     Converts VisDrone box to normalized YOLO format (x_center, y_center, width, height).
     Clips to image boundaries and rejects invalid boxes.
@@ -96,7 +96,7 @@ def convert_to_yolo_format(box: Dict[str, int], img_width: int, img_height: int)
     return (x_center, y_center, norm_w, norm_h)
 
 
-def convert_dataset(images_dir: Path, labels_dir: Path, output_dir: Path, mode: str = "separate", dry_run: bool = False) -> Dict[str, int]:
+def convert_dataset(images_dir: Path, labels_dir: Path, output_dir: Path, mode: str = "separate", dry_run: bool = False) -> dict[str, int]:
     """
     Converts a directory of VisDrone images and labels to YOLO format.
     Saves in output_dir/images and output_dir/labels.
@@ -147,7 +147,7 @@ def convert_dataset(images_dir: Path, labels_dir: Path, output_dir: Path, mode: 
             continue
 
         yolo_lines = []
-        with open(label_path, 'r', encoding='utf-8') as f:
+        with open(label_path, encoding='utf-8') as f:
             for line in f:
                 parsed = parse_visdrone_row(line)
                 if not parsed:

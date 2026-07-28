@@ -6,7 +6,9 @@ Validates YOLO format dataset for errors.
 import argparse
 import json
 from pathlib import Path
+
 import cv2
+
 
 def validate_dataset(dataset_name: str, images_dir: Path, labels_dir: Path):
     report = {
@@ -48,7 +50,7 @@ def validate_dataset(dataset_name: str, images_dir: Path, labels_dir: Path):
         seen_rows = set()
 
         try:
-            with open(label_path, 'r', encoding='utf-8') as f:
+            with open(label_path, encoding='utf-8') as f:
                 for line in f:
                     line = line.strip()
                     if not line:
