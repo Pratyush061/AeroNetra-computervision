@@ -7,7 +7,6 @@ Supports 'merged' (all vehicles → class 0) and 'separate' (per-type classes) m
 import logging
 import os
 from pathlib import Path
-from typing import Dict, Optional, Tuple
 
 import cv2
 
@@ -27,7 +26,7 @@ VISDRONE_VEHICLE_CLASSES = {
     10: "motor"
 }
 
-def parse_visdrone_row(row_str: str) -> Optional[Dict[str, int]]:
+def parse_visdrone_row(row_str: str) -> dict[str, int | None]:
     """
     Parses a single row from a VisDrone annotation file.
     Format: <bbox_left>,<bbox_top>,<bbox_width>,<bbox_height>,<score>,<object_category>,<truncation>,<occlusion>
@@ -49,7 +48,7 @@ def parse_visdrone_row(row_str: str) -> Optional[Dict[str, int]]:
     except ValueError:
         return None
 
-def map_category(category: int, mode: str = "separate") -> Optional[int]:
+def map_category(category: int, mode: str = "separate") -> int | None:
     """Maps a VisDrone category to a YOLO class ID.
 
     Args:
@@ -74,7 +73,7 @@ def map_category(category: int, mode: str = "separate") -> Optional[int]:
 
     return None
 
-def convert_to_yolo_format(box: Dict[str, int], img_width: int, img_height: int) -> Optional[Tuple[float, float, float, float]]:
+def convert_to_yolo_format(box: dict[str, int], img_width: int, img_height: int) -> tuple[float, float, float, float | None]:
     """
     Converts VisDrone box to normalized YOLO format (x_center, y_center, width, height).
     Clips to image boundaries and rejects invalid boxes.
@@ -104,7 +103,7 @@ def convert_to_yolo_format(box: Dict[str, int], img_width: int, img_height: int)
     return (x_center, y_center, norm_w, norm_h)
 
 
-def convert_dataset(images_dir: Path, labels_dir: Path, output_dir: Path, mode: str = "separate", dry_run: bool = False) -> Dict[str, int]:
+def convert_dataset(images_dir: Path, labels_dir: Path, output_dir: Path, mode: str = "separate", dry_run: bool = False) -> dict[str, int]:
     """
     Converts a directory of VisDrone images and labels to YOLO format.
 

@@ -1,7 +1,6 @@
 """Model adapter interfaces for consistent object detection behavior."""
 
 from abc import ABC, abstractmethod
-from typing import Dict
 
 import logging
 import time
@@ -17,7 +16,7 @@ _ULTRALYTICS_PATTERNS = ("yolo", "rtdetr", "rt-detr")
 
 class BaseDetector(ABC):
     """Abstract base class for all object detectors."""
-    def __init__(self, weights_path: str, class_names: Dict[int, str], device: str = "cpu"):
+    def __init__(self, weights_path: str, class_names: dict[int, str], device: str = "cpu"):
         self.weights_path = weights_path
         self.class_names = class_names
         self.device = device
@@ -38,7 +37,7 @@ class UltralyticsAdapter(BaseDetector):
     Adapter for Ultralytics models (YOLOv8, YOLO11, YOLO26, RT-DETR).
     Requires the ultralytics package.
     """
-    def __init__(self, model_type: str, weights_path: str, class_names: Dict[int, str], device: str = "cpu"):
+    def __init__(self, model_type: str, weights_path: str, class_names: dict[int, str], device: str = "cpu"):
         super().__init__(weights_path, class_names, device)
         self.model_type = model_type
 
@@ -116,7 +115,7 @@ class UltralyticsAdapter(BaseDetector):
 def get_model_adapter(
     model_name: str,
     weights_path: str,
-    class_names: Dict[int, str],
+    class_names: dict[int, str],
     device: str = "cpu",
 ) -> BaseDetector:
     """Returns the appropriate adapter instance based on the model name.

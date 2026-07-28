@@ -1,14 +1,13 @@
 """Reusable plotting utilities for dataset exploration and validation."""
 
 from pathlib import Path
-from typing import Dict, List
 
 import matplotlib.pyplot as plt
 
 
 def plot_class_distribution(
-    class_counts: Dict[int, int],
-    class_names: Dict[int, str],
+    class_counts: dict[int, int],
+    class_names: dict[int, str],
     output_path: Path,
 ) -> None:
     """Plots a bar chart of class distributions."""
@@ -33,7 +32,7 @@ def plot_class_distribution(
     plt.close()
 
 def plot_size_distribution(
-    sizes: List[int],
+    sizes: list[int],
     title: str,
     xlabel: str,
     output_path: Path,
@@ -50,7 +49,7 @@ def plot_size_distribution(
     plt.savefig(output_path)
     plt.close()
 
-def plot_objects_per_image(counts_per_image: List[int], output_path: Path) -> None:
+def plot_objects_per_image(counts_per_image: list[int], output_path: Path) -> None:
     """Plots histogram of number of objects per image."""
     plt.figure(figsize=(10, 6))
     plt.hist(counts_per_image, bins=range(min(counts_per_image or [0]), max(counts_per_image or [1]) + 2, 1), color='lightgreen', edgecolor='black', align='left')

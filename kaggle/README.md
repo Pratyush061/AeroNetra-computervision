@@ -44,13 +44,13 @@ Use in local notebooks 03–06
 ### Step 1: Upload VisDrone Dataset
 
 Add the public VisDrone dataset to Kaggle:
-- Search for `banuprasadb/visdrone-dataset` on Kaggle Datasets
-- Or upload your own VisDrone-DET dataset. The dataset root is dynamically discovered, so if your paths are slightly different, the notebook will still find the `train/`, `val/`, and `test/` splits automatically.
+- Search for `shisuiotsutsuki/visdrone2019-det` on Kaggle Datasets
+- Or upload your own VisDrone-DET dataset
 
 ### Step 2: Run Notebook 01 (Dataset Prep)
 
 1. Create a new Kaggle notebook
-2. Add dataset: `visdrone-dataset`
+2. Add dataset: `visdrone2019-det`
 3. Upload `01_dataset_preparation.ipynb`
 4. Run all cells
 5. **Save the output as a new Kaggle dataset** → name it `aeronetra-visdrone-yolo`
