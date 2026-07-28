@@ -63,6 +63,13 @@ This repository is **AeroNetra**, a computer-vision research project for UAV/dro
 │   ├── 07_model_training.ipynb
 │   └── 08_model_evaluation.ipynb
 │
+├── kaggle/                    ← GPU-accelerated notebooks for Kaggle (training, evaluation, inference)
+│   ├── 01_dataset_preparation.ipynb    ← Convert VisDrone → YOLO format
+│   ├── 02_model_training.ipynb          ← Fine-tune YOLOv8n, YOLO11n, RT-DETR-l
+│   ├── 03_model_evaluation.ipynb        ← Compute mAP, precision, recall
+│   ├── 04_inference_comparison.ipynb    ← Multi-model inference comparison
+│   └── README.md                        ← Kaggle setup instructions
+│
 ├── scripts/
 │   ├── download_dataset.py    ← Kaggle dataset downloader (requires --download flag)
 │   └── validate_dataset.py    ← YOLO format dataset validator

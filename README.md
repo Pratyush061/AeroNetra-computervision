@@ -77,6 +77,57 @@ Raw datasets should be placed in `data/raw/` or configured via the `DATASET_DIR`
 
 **Do not commit dataset files to version control** — they are large binary files tracked in `.gitignore`.
 
+## Workflow: Local + Kaggle GPU
+
+AeroNetra supports two complementary workflows:
+
+### **Local Workflow** (No GPU Required)
+- Exploratory notebooks (00–02): environment check, dataset exploration, OpenCV counting
+- Small-scale inference and visualization
+- Runs on CPU; fast enough for prototyping
+- **Location:** `notebooks/` (00–06 for inference testing, 07–08 not yet completed)
+
+### **Kaggle GPU Workflow** (Recommended for Training)
+- **Problem:** Training and evaluation require a GPU (T4 x2 free on Kaggle).
+- **Solution:** 4 specialized self-contained notebooks in `kaggle/` that run on Kaggle GPUs:
+  1. **01_dataset_preparation** — Convert VisDrone → YOLO format
+  2. **02_model_training** — Fine-tune YOLOv8n, YOLO11n, RT-DETR-l (50/50/30 epochs)
+  3. **03_model_evaluation** — mAP@50, mAP@50-95, precision, recall benchmarks
+  4. **04_inference_comparison** — Side-by-side multi-model inference visualizations
+- **Workflow:** Train on Kaggle → Download weights → Use locally via `get_model_adapter()`
+- **See:** [kaggle/README.md](kaggle/README.md) for full setup instructions
+
+## Recent Code Improvements (July 2026)
+
+✅ **Import Paths Fixed**
+- All imports changed from `from src.aeronetra...` to `from aeronetra...` (standard package imports)
+- Works correctly after `pip install -e .`
+
+✅ **Package Exports**
+- Root `__init__.py` now exports public API: `BoundingBox`, `Detection`, `ModelPrediction`, `CountSummary`, `InferenceMetadata`, `get_model_adapter`
+- All 6 subpackages have `__init__.py` with re-exports for cleaner imports
+
+✅ **Data Structure Safety**
+- `BoundingBox` now validates coordinates on creation (raises `ValueError` if xmin > xmax or ymin > ymax)
+- `ModelPrediction.filter_by_confidence()` and `filter_by_class()` now return new instances instead of mutating in-place
+
+✅ **Config Improvements**
+- Added `load_yaml()` helper to load any YAML config file
+- Added `load_inference_config()` shortcut for `configs/inference/inference.yaml`
+- Added `get_output_dir()` function (respects `OUTPUT_DIR` env var)
+
+✅ **Bug Fixes**
+- Fixed NMS in `ops.py`: removed `int()` casting that lost float precision on box coordinates
+- Fixed `validate_dataset.py`: early returns now return the stats dict (not `None`)
+- Removed dead code in `visdrone.py` — cleaner `map_category()` implementation
+- Added logging to adapters, ops, visdrone modules
+
+✅ **Testing**
+- All test imports updated to use standard `aeronetra` package paths
+- `test_counting.py` updated for non-mutating filter methods
+- `test_config.py` expanded with YAML loader tests
+- All Pylance checks pass (no errors in src/ or tests/)
+
 ## Key Documentation
 
 | Document | Description |

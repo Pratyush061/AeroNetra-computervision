@@ -1,6 +1,6 @@
 # Environment Setup
 
-Detailed instructions for setting up the AeroNetra development environment.
+Detailed instructions for setting up the AeroNetra development environment locally. For GPU-accelerated training and evaluation, see **Kaggle Setup** below.
 
 ---
 
@@ -9,12 +9,15 @@ Detailed instructions for setting up the AeroNetra development environment.
 - **Python 3.11** (strictly required)
 - Virtual environment (`venv` or `conda`)
 - Git
-- (Optional) NVIDIA GPU with CUDA drivers for GPU-accelerated inference and training
+- (Optional) NVIDIA GPU with CUDA drivers for GPU-accelerated inference (local machine)
+- (Optional) **Kaggle account** for free GPU access (T4 x2) — **Recommended for training and evaluation**
 - (Optional) Kaggle CLI for dataset downloads
 
 ---
 
-## Step 1: Create and Activate a Virtual Environment
+## Local Environment Setup
+
+### Step 1: Create and Activate a Virtual Environment
 
 **Using venv (recommended):**
 ```bash
@@ -113,6 +116,45 @@ If using `scripts/download_dataset.py` to download VisDrone from Kaggle:
 5. Download using the script (requires explicit `--download` flag):
    ```bash
    python scripts/download_dataset.py --download
+
+   ## GPU Training on Kaggle (Recommended Alternative)
+
+   If you don't have a local GPU, **Kaggle provides free T4 x2 GPU access** (30 hours/week) for training and evaluation.
+
+   ### Why Use Kaggle Over Local GPU?
+
+   - **Free GPU quota:** 30 hours/week (sufficient for training 3 models on VisDrone)
+   - **Pre-installed libraries:** CUDA, PyTorch, ultralytics, OpenCV pre-configured
+   - **No installation hassles:** Run directly in browser; no driver/CUDA version conflicts
+   - **Reproducible datasets:** Kaggle datasets can be attached and versioned
+   - **Easy weight sharing:** Save trained weights as Kaggle dataset for reuse
+
+   ### Kaggle Workflow
+
+   Kaggle notebooks in `kaggle/` are self-contained and require no local installation:
+
+   1. **01_dataset_preparation** → Convert VisDrone to YOLO format
+   2. **02_model_training** → Train YOLOv8n, YOLO11n, RT-DETR-l (1–3 hours with GPU)
+   3. **03_model_evaluation** → Evaluate all models (mAP@50, precision, recall)
+   4. **04_inference_comparison** → Visual comparison and speed benchmarks
+
+   **Setup:** See [kaggle/README.md](../../kaggle/README.md) for step-by-step instructions.
+
+   **Download Trained Weights:** After training on Kaggle, download weights locally and use via:
+   ```python
+   from aeronetra import get_model_adapter
+
+   adapter = get_model_adapter(
+      model_name="YOLOv8",
+      weights_path="outputs/models/best_yolov8.pt",
+      class_names={0: "vehicle"},
+      device="cpu"  # or "cuda" if local GPU available
+   )
+   adapter.load_model()
+   prediction = adapter.predict(image)
+   ```
+
+   ---
    ```
 
 ---

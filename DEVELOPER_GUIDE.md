@@ -91,12 +91,69 @@ prediction = adapter.predict(image)     # Returns ModelPrediction
 Never instantiate models directly (e.g., `YOLO("path")`).
 
 ### Data Structures
-Use dataclasses from `src/aeronetra/detection/types.py` for all detection results:
-- `BoundingBox` — xyxy absolute pixel coordinates
+Use dataclasses from `aeronetra.detection.types` for all detection results:
+- `BoundingBox` — xyxy absolute pixel coordinates; validates xmin ≤ xmax, ymin ≤ ymax on creation
 - `Detection` — single detected object
-- `ModelPrediction` — complete inference output with filter methods
+- `ModelPrediction` — complete inference output; `filter_by_confidence()` and `filter_by_class()` return new instances (non-mutating)
 - `CountSummary` — counting results per image
 - `InferenceMetadata` — **all fields mandatory** for experiment tracking
+
+---
+
+## 4. GPU Training Workflow (Kaggle)
+
+Due to hardware constraints, model training and evaluation are designed to run on **Kaggle** (free GPU access: T4 x2).
+
+### When to Use Kaggle
+- Training YOLOv8n, YOLO11n, or RT-DETR-l on VisDrone (50–100 epochs)
+- Evaluating trained models (mAP computation)
+- Batch inference with multiple models
+
+### When to Use Local
+- Interactive exploration with small images
+- Testing data loading and preprocessing
+- Running inference with a single pretrained model on CPU
+
+### Kaggle Notebooks
+
+Four self-contained notebooks in `kaggle/` folder:
+
+| # | Notebook | GPU | Purpose |
+|---|----------|-----|----------|
+| 01 | dataset_preparation | No | Convert VisDrone annotations → YOLO format |
+| 02 | model_training | **Yes** | Fine-tune YOLOv8n, YOLO11n, RT-DETR-l |
+| 03 | model_evaluation | **Yes** | Compute mAP@50, mAP@50-95, precision, recall |
+| 04 | inference_comparison | **Yes** | Side-by-side visual comparison of all models |
+
+### Setup on Kaggle
+
+1. **Add datasets to Kaggle:**
+   - `shisuiotsutsuki/visdrone2019-det` (public VisDrone dataset)
+   - (Optional) Your own VisDrone upload
+
+2. **Run notebook 01** (dataset prep — no GPU needed)
+   - Save output as Kaggle dataset: `aeronetra-visdrone-yolo`
+
+3. **Run notebook 02** (training — GPU T4 x2 required)
+   - Attach dataset from step 2
+   - Enable Accelerator → GPU T4 x2
+   - Training takes 1–3 hours
+   - Save output as Kaggle dataset: `aeronetra-trained-weights`
+
+4. **Run notebooks 03–04** (evaluation & inference — GPU T4 x2 recommended)
+   - Attach both datasets from steps 2 and 3
+   - Results saved to `/kaggle/working/`
+
+5. **Download trained weights locally**
+   - Download `best_weights/*.pt` files
+   - Place in `outputs/models/` directory
+   - Use in local notebooks via `get_model_adapter()`
+
+See [kaggle/README.md](../kaggle/README.md) for full setup instructions.
+
+---
+
+## 5. Running Tests and Linting
 
 ### OpenCV
 Use `cv2` (OpenCV) for image loading, bounding-box drawing, geometric filtering, ROI logic, and NMS (`cv2.dnn.NMSBoxes`).
