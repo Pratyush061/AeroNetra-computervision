@@ -1,7 +1,6 @@
 """Drawing utilities for detections, ROI overlays, and result export."""
 
 from pathlib import Path
-from typing import List, Tuple
 
 import csv
 import cv2
@@ -10,7 +9,7 @@ import numpy as np
 
 from aeronetra.detection.types import CountSummary, Detection
 
-def draw_detections(image: np.ndarray, detections: List[Detection], color: Tuple[int, int, int] = (0, 255, 0), thickness: int = 2) -> np.ndarray:
+def draw_detections(image: np.ndarray, detections: list[Detection], color: tuple[int, int, int] = (0, 255, 0), thickness: int = 2) -> np.ndarray:
     """Draws bounding boxes and labels on an image."""
     out_img = image.copy()
 
@@ -28,14 +27,14 @@ def draw_detections(image: np.ndarray, detections: List[Detection], color: Tuple
 
     return out_img
 
-def draw_roi(image: np.ndarray, roi_xyxy: Tuple[float, float, float, float], color: Tuple[int, int, int] = (0, 0, 255), thickness: int = 2) -> np.ndarray:
+def draw_roi(image: np.ndarray, roi_xyxy: tuple[float, float, float, float], color: tuple[int, int, int] = (0, 0, 255), thickness: int = 2) -> np.ndarray:
     """Draws a Region of Interest rectangle."""
     out_img = image.copy()
     x1, y1, x2, y2 = map(int, roi_xyxy)
     cv2.rectangle(out_img, (x1, y1), (x2, y2), color, thickness)
     return out_img
 
-def export_to_json(detections: List[Detection], output_path: Path):
+def export_to_json(detections: list[Detection], output_path: Path):
     """Exports detections to a JSON file."""
     data = []
     for d in detections:
@@ -48,7 +47,7 @@ def export_to_json(detections: List[Detection], output_path: Path):
     with open(output_path, 'w') as f:
         json.dump(data, f, indent=2)
 
-def export_to_csv(detections: List[Detection], output_path: Path):
+def export_to_csv(detections: list[Detection], output_path: Path):
     """Exports detections to a CSV file."""
     with open(output_path, 'w', newline='') as f:
         writer = csv.writer(f)

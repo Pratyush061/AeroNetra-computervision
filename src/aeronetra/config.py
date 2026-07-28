@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import yaml
 
@@ -31,7 +31,7 @@ def get_output_dir() -> Path:
     return Path(os.environ.get("OUTPUT_DIR", str(OUTPUT_DIR)))
 
 
-def load_yaml(config_path: Path) -> Dict[str, Any]:
+def load_yaml(config_path: Path) -> dict[str, Any]:
     """Load a YAML configuration file and return its contents as a dict.
 
     Raises:
@@ -43,6 +43,6 @@ def load_yaml(config_path: Path) -> Dict[str, Any]:
         return yaml.safe_load(f) or {}
 
 
-def load_inference_config() -> Dict[str, Any]:
+def load_inference_config() -> dict[str, Any]:
     """Load the shared inference config from configs/inference/inference.yaml."""
     return load_yaml(CONFIGS_DIR / "inference" / "inference.yaml")

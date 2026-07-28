@@ -1,7 +1,6 @@
 """Core data structures for object detection and counting."""
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple
 
 @dataclass
 class BoundingBox:
@@ -23,7 +22,7 @@ class BoundingBox:
             )
 
     @property
-    def xyxy(self) -> Tuple[float, float, float, float]:
+    def xyxy(self) -> tuple[float, float, float, float]:
         return (self.xmin, self.ymin, self.xmax, self.ymax)
 
     @property
@@ -39,7 +38,7 @@ class BoundingBox:
         return max(0.0, self.width) * max(0.0, self.height)
 
     @property
-    def center(self) -> Tuple[float, float]:
+    def center(self) -> tuple[float, float]:
         return (self.xmin + self.width / 2, self.ymin + self.height / 2)
 
 
@@ -57,7 +56,7 @@ class Detection:
 @dataclass
 class ModelPrediction:
     """Represents the complete set of detections from a model for one image."""
-    detections: List[Detection] = field(default_factory=list)
+    detections: list[Detection] = field(default_factory=list)
     image_width: int = 0
     image_height: int = 0
     inference_time_ms: float = 0.0
@@ -72,7 +71,7 @@ class ModelPrediction:
             inference_time_ms=self.inference_time_ms,
         )
 
-    def filter_by_class(self, allowed_classes: List[int]) -> "ModelPrediction":
+    def filter_by_class(self, allowed_classes: list[int]) -> "ModelPrediction":
         """Returns a new ModelPrediction with only the allowed class IDs."""
         filtered = [d for d in self.detections if d.class_id in allowed_classes]
         return ModelPrediction(
@@ -88,7 +87,7 @@ class CountSummary:
     """Represents the counting results for an image."""
     image_id: str
     total_vehicles: int
-    class_counts: Dict[str, int]
+    class_counts: dict[str, int]
     model_name: str
 
 
@@ -99,7 +98,7 @@ class InferenceMetadata:
     package_version: str
     weights_path: str
     dataset_version: str
-    image_size: Tuple[int, int]
+    image_size: tuple[int, int]
     confidence_threshold: float
     iou_threshold: float
     seed: int
