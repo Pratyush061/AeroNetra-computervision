@@ -1,0 +1,16 @@
+dataset_name: "VisDrone"
+format: "yolo"
+paths:
+  train:
+    images: "${DATASET_DIR}/processed/visdrone_merged/train/images"
+    labels: "${DATASET_DIR}/processed/visdrone_merged/train/labels"
+  val:
+    images: "${DATASET_DIR}/processed/visdrone_merged/val/images"
+    labels: "${DATASET_DIR}/processed/visdrone_merged/val/labels"
+  test:
+    images: "${DATASET_DIR}/processed/visdrone_merged/test/images"
+    labels: "${DATASET_DIR}/processed/visdrone_merged/test/labels"
+class_mode: "merged"
+# Merged into a single "vehicle" class
+classes:
+  0: "vehicle"

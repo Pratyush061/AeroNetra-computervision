@@ -1,0 +1,22 @@
+dataset_name: "VisDrone"
+format: "yolo"
+paths:
+  train:
+    images: "${DATASET_DIR}/processed/visdrone_separate/train/images"
+    labels: "${DATASET_DIR}/processed/visdrone_separate/train/labels"
+  val:
+    images: "${DATASET_DIR}/processed/visdrone_separate/val/images"
+    labels: "${DATASET_DIR}/processed/visdrone_separate/val/labels"
+  test:
+    images: "${DATASET_DIR}/processed/visdrone_separate/test/images"
+    labels: "${DATASET_DIR}/processed/visdrone_separate/test/labels"
+class_mode: "separate"
+# Separate classes for detailed detection
+classes:
+  0: "car"
+  1: "van"
+  2: "truck"
+  3: "tricycle"
+  4: "awning-tricycle"
+  5: "bus"
+  6: "motor"
