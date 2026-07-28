@@ -46,7 +46,7 @@ class UltralyticsAdapter(BaseDetector):
             self.model.to(self.device)
         except ImportError:
             raise ImportError("Please install ultralytics to use this adapter.")
-        except Exception as e:
+        except (AttributeError, TypeError, RuntimeError, OSError) as e:
             raise RuntimeError(f"Failed to load {self.model_type} from {self.weights_path}. Error: {e}")
 
     def predict(self, image: np.ndarray, conf_thresh: float = 0.25, iou_thresh: float = 0.45) -> ModelPrediction:

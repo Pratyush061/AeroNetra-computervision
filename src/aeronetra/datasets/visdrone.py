@@ -142,7 +142,7 @@ def convert_dataset(images_dir: Path, labels_dir: Path, output_dir: Path, mode: 
                 stats['malformed_annotations'] += 1
                 continue
             img_h, img_w = img.shape[:2]
-        except Exception:
+        except (ValueError, IndexError, OSError, cv2.error):
             stats['malformed_annotations'] += 1
             continue
 

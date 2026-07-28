@@ -91,7 +91,7 @@ def validate_dataset(dataset_name: str, images_dir: Path, labels_dir: Path):
                     if aspect_ratio > 10 or aspect_ratio < 0.1:
                         report["extreme_aspect_ratios"] += 1
 
-        except Exception:
+        except (ValueError, IndexError, OSError):
             report["malformed_labels"] += 1
 
     print("=== Validation Report ===")
