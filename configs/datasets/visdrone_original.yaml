@@ -1,0 +1,26 @@
+dataset_name: "VisDrone"
+format: "visdrone_original"
+paths:
+  train:
+    images: "${DATASET_DIR}/VisDrone2019-DET-train/images"
+    annotations: "${DATASET_DIR}/VisDrone2019-DET-train/annotations"
+  val:
+    images: "${DATASET_DIR}/VisDrone2019-DET-val/images"
+    annotations: "${DATASET_DIR}/VisDrone2019-DET-val/annotations"
+  test:
+    images: "${DATASET_DIR}/VisDrone2019-DET-test-dev/images"
+    annotations: "${DATASET_DIR}/VisDrone2019-DET-test-dev/annotations"
+class_mode: "separate" # Or merged
+classes:
+  0: "ignored regions"
+  1: "pedestrian"
+  2: "people"
+  3: "bicycle"
+  4: "car"
+  5: "van"
+  6: "truck"
+  7: "tricycle"
+  8: "awning-tricycle"
+  9: "bus"
+  10: "motor"
+  11: "others"

@@ -1,0 +1,82 @@
+datasets:
+  - name: VisDrone
+    source: "https://github.com/VisDrone/VisDrone-Dataset"
+    kaggle_source: "https://www.kaggle.com/datasets/mukuldeshantri/visdrone2019" # Verify license and contents
+    task: "Detection"
+    viewpoint: "Aerial"
+    expected_format: "VisDrone original (TXT)"
+    vehicle_classes:
+      - 3 # car
+      - 4 # van
+      - 5 # truck
+      - 6 # tricycle
+      - 7 # awning-tricycle
+      - 8 # bus
+      - 9 # motor
+    license: "Unknown (Typically non-commercial research, verify official source)"
+    expected_structure: |
+      VisDrone2019/
+      ├── VisDrone2019-DET-train/
+      │   ├── images/
+      │   └── annotations/
+      ├── VisDrone2019-DET-val/
+      │   ├── images/
+      │   └── annotations/
+      └── VisDrone2019-DET-test-dev/
+          ├── images/
+          └── annotations/
+    conversion_status: "Required"
+    limitations: "Many small objects, dense scenes, variable altitudes, requires mapping to YOLO format."
+
+  - name: UAVDT
+    source: "https://sites.google.com/site/daviddo0323/projects/uavdt"
+    kaggle_source: "https://www.kaggle.com/datasets/datamunge/uavdt-dataset" # Verify license and contents
+    task: "Detection, Tracking"
+    viewpoint: "Aerial"
+    expected_format: "UAVDT (TXT) - differs from VisDrone"
+    vehicle_classes:
+      - 1 # car
+      - 2 # truck
+      - 3 # bus
+    license: "Unknown (Verify official source)"
+    expected_structure: |
+      UAVDT/
+      ├── UAV-benchmark-M/
+      └── UAV-benchmark-MOTD_v1.0/
+    conversion_status: "Pending implementation"
+    limitations: "Different annotation format from VisDrone, tracking focus but usable for detection."
+
+  - name: UA-DETRAC
+    source: "https://detrac-dataset.github.io/"
+    kaggle_source: null
+    task: "Detection, Tracking"
+    viewpoint: "Fixed-camera"
+    expected_format: "XML (Pascal VOC like)"
+    vehicle_classes:
+      - car
+      - bus
+      - van
+      - others
+    license: "Unknown (Verify official source)"
+    expected_structure: |
+      DETRAC/
+      ├── Insight-MVT_Annotation_Train/
+      └── Insight-MVT_Annotation_Test/
+    conversion_status: "Pending implementation"
+    limitations: "Fixed camera viewpoint (domain gap compared to drone imagery), optional comparison dataset."
+
+  - name: SampleDataset
+    source: "Generated fixtures"
+    kaggle_source: null
+    task: "Testing"
+    viewpoint: "N/A"
+    expected_format: "YOLO (TXT)"
+    vehicle_classes:
+      - 0 # merged vehicle class
+    license: "N/A"
+    expected_structure: |
+      sample/
+      ├── images/
+      └── labels/
+    conversion_status: "N/A"
+    limitations: "Very small sample or generated fixtures for local tests only."

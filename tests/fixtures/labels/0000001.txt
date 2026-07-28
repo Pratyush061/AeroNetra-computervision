@@ -1,0 +1,13 @@
+# Original VisDrone format: <bbox_left>,<bbox_top>,<bbox_width>,<bbox_height>,<score>,<object_category>,<truncation>,<occlusion>
+# Valid car (category 4)
+684,8,273,116,1,4,0,0
+# Ignored region (category 0)
+10,10,50,50,0,0,0,0
+# Pedestrian (category 1 - ignored by our converter for vehicle detection)
+100,100,20,40,1,1,0,0
+# Malformed row
+684,8,273
+# Zero area box (category 5)
+200,200,0,0,1,5,0,0
+# Out of bounds but partially visible (will be clipped)
+-10,-10,100,100,1,4,0,0
