@@ -8,7 +8,12 @@ import json
 from pathlib import Path
 import cv2
 
-def validate_dataset(dataset_name: str, images_dir: Path, labels_dir: Path):
+def validate_dataset(
+    dataset_name: str,
+    images_dir: Path,
+    labels_dir: Path,
+    num_classes: int | None = None,
+) -> dict:
     report = {
         "dataset": dataset_name,
         "total_images": 0,
@@ -26,10 +31,10 @@ def validate_dataset(dataset_name: str, images_dir: Path, labels_dir: Path):
 
     if not images_dir.exists():
         print(f"Error: Images directory not found: {images_dir}")
-        return
+        return report
     if not labels_dir.exists():
         print(f"Error: Labels directory not found: {labels_dir}")
-        return
+        return report
 
     for img_path in images_dir.glob("*.jpg"):
         report["total_images"] += 1
@@ -71,7 +76,7 @@ def validate_dataset(dataset_name: str, images_dir: Path, labels_dir: Path):
                         report["malformed_labels"] += 1
                         continue
 
-                    if c < 0:
+                    if c < 0 or (num_classes is not None and c >= num_classes):
                         report["invalid_class_ids"] += 1
 
                     report["class_counts"][c] = report["class_counts"].get(c, 0) + 1
@@ -94,6 +99,7 @@ def validate_dataset(dataset_name: str, images_dir: Path, labels_dir: Path):
         except (ValueError, IndexError, OSError):
             report["malformed_labels"] += 1
 
+    # ── Print report ──────────────────────────────────────────────────
     print("=== Validation Report ===")
     for k, v in report.items():
         if k != "class_counts":
@@ -106,14 +112,20 @@ def validate_dataset(dataset_name: str, images_dir: Path, labels_dir: Path):
     print("\nJSON Output:")
     print(json.dumps(report, indent=2))
 
+    return report
+
 def main():
     parser = argparse.ArgumentParser(description="Validate YOLO format dataset.")
     parser.add_argument("--dataset", required=True, help="Name of the dataset")
     parser.add_argument("--images", required=True, help="Path to images directory")
     parser.add_argument("--labels", required=True, help="Path to labels directory")
+    parser.add_argument(
+        "--num-classes", type=int, default=None,
+        help="Expected number of classes (validates class IDs are in [0, N))",
+    )
     args = parser.parse_args()
 
-    validate_dataset(args.dataset, Path(args.images), Path(args.labels))
+    validate_dataset(args.dataset, Path(args.images), Path(args.labels), args.num_classes)
 
 if __name__ == "__main__":
     main()

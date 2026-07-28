@@ -25,18 +25,22 @@ This repository is **AeroNetra**, a computer-vision research project for UAV/dro
 ├── .env.example               ← Template for environment variables
 │
 ├── src/aeronetra/             ← ALL reusable Python library code
-│   ├── __init__.py            ← Package init (version string only)
-│   ├── config.py              ← Paths (ROOT_DIR, DATA_DIR) and defaults
+│   ├── __init__.py            ← Package init with public API re-exports
+│   ├── config.py              ← Paths (ROOT_DIR, DATA_DIR), defaults, YAML loader
 │   ├── detection/
+│   │   ├── __init__.py        ← Re-exports types and adapters
 │   │   ├── adapters.py        ← BaseDetector ABC, UltralyticsAdapter, get_model_adapter()
 │   │   └── types.py           ← BoundingBox, Detection, ModelPrediction, CountSummary, InferenceMetadata
 │   ├── counting/
+│   │   ├── __init__.py        ← Re-exports ops and drawing functions
 │   │   ├── ops.py             ← Coordinate conversions, filtering, NMS, count_vehicles()
 │   │   └── drawing.py         ← draw_detections(), draw_roi(), export_to_json/csv()
 │   ├── datasets/
+│   │   ├── __init__.py        ← Re-exports VisDrone functions
 │   │   ├── visdrone.py        ← VisDrone parser, converter, class mapping (IMPLEMENTED)
 │   │   └── uavdt.py           ← STUB — raises NotImplementedError (NOT implemented)
 │   ├── visualization/
+│   │   ├── __init__.py        ← Re-exports plot functions
 │   │   └── plots.py           ← plot_class_distribution(), plot_size_distribution()
 │   ├── evaluation/            ← STUB — only .gitkeep (NOT implemented)
 │   └── utils/                 ← STUB — only .gitkeep (NOT implemented)
@@ -135,6 +139,7 @@ These are the **only** data structures for detection results. Never use raw dict
 
 ### `BoundingBox`
 - Fields: `xmin`, `ymin`, `xmax`, `ymax` (float, **absolute pixel coordinates**, xyxy format)
+- Validated on creation: `xmin <= xmax` and `ymin <= ymax` (raises `ValueError` if violated)
 - Properties: `width`, `height`, `area`, `center`, `xyxy`
 
 ### `Detection`
@@ -142,7 +147,7 @@ These are the **only** data structures for detection results. Never use raw dict
 
 ### `ModelPrediction`
 - Fields: `detections` (List[Detection]), `image_width` (int), `image_height` (int), `inference_time_ms` (float)
-- Methods: `filter_by_confidence(threshold)`, `filter_by_class(allowed_classes)`
+- Methods: `filter_by_confidence(threshold)`, `filter_by_class(allowed_classes)` — both return a **new** `ModelPrediction` (they do NOT mutate in place)
 - This is what `adapter.predict()` returns.
 
 ### `CountSummary`
@@ -238,6 +243,12 @@ DEFAULT_CONFIDENCE = 0.5   # ← higher than inference.yaml
 DEFAULT_IOU = 0.45
 ```
 
+**Helper functions:**
+- `get_data_dir()` — returns `DATASET_DIR` env var or falls back to `data/raw/`
+- `get_output_dir()` — returns `OUTPUT_DIR` env var or falls back to `outputs/`
+- `load_yaml(config_path)` — loads any YAML config file, returns dict
+- `load_inference_config()` — shortcut to load `configs/inference/inference.yaml`
+
 **Resolution rule:** YAML config values override `config.py` defaults at runtime. When writing notebooks or scripts, load thresholds from `inference.yaml` rather than using `config.py` defaults directly.
 
 ### Important Config Values
@@ -287,6 +298,7 @@ DEFAULT_IOU = 0.45
 - **Notebooks** call library functions from `src/aeronetra/`. Keep cells short and ordered.
 - **Clear notebook outputs** before committing (`jupyter nbconvert --clear-output --inplace notebooks/*.ipynb`).
 - **Import convention:** `from aeronetra.detection.adapters import get_model_adapter` (not `from src.aeronetra...`).
+- **Package exports:** Key classes are re-exported from `aeronetra` top-level: `from aeronetra import Detection, ModelPrediction, get_model_adapter`.
 - **OpenCV** (`cv2`) is the standard for image loading, bounding-box drawing, geometric filtering, ROI logic, and NMS.
 
 ---
@@ -329,9 +341,7 @@ pytest tests/test_counting.py -v
 
 ### Currently Untested (Known Gaps)
 
-- `src/aeronetra/detection/types.py` — dataclass tests missing
 - `src/aeronetra/visualization/plots.py` — no tests
-- `src/aeronetra/config.py` — no tests
 - `scripts/` — no tests
 
 ---

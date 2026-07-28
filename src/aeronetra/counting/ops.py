@@ -1,10 +1,14 @@
-"""
-OpenCV bounding box conversions, clipping, filtering, and NMS logic.
-"""
-from typing import List, Tuple, Optional
+"""Bounding-box coordinate conversions, clipping, filtering, NMS, and counting."""
+
+from typing import List, Optional, Tuple
+
 import cv2
+import logging
 import numpy as np
-from src.aeronetra.detection.types import BoundingBox, Detection
+
+from aeronetra.detection.types import BoundingBox, Detection
+
+logger = logging.getLogger(__name__)
 
 def convert_xywh_to_xyxy(x: float, y: float, w: float, h: float) -> Tuple[float, float, float, float]:
     """Converts top-left xywh to xyxy."""
@@ -69,10 +73,8 @@ def apply_nms(detections: List[Detection], iou_threshold: float) -> List[Detecti
     scores = []
 
     for d in detections:
-        # cv2.dnn.NMSBoxes expects xywh
-        w = d.box.width
-        h = d.box.height
-        boxes.append([int(d.box.xmin), int(d.box.ymin), int(w), int(h)])
+        # cv2.dnn.NMSBoxes expects [x, y, w, h] (top-left xywh)
+        boxes.append([d.box.xmin, d.box.ymin, d.box.width, d.box.height])
         scores.append(float(d.confidence))
 
     indices = cv2.dnn.NMSBoxes(boxes, scores, 0.0, iou_threshold)

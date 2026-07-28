@@ -1,5 +1,6 @@
 import numpy as np
-from src.aeronetra.detection.adapters import get_model_adapter
+
+from aeronetra.detection.adapters import get_model_adapter
 
 class MockResultBox:
     def __init__(self):
@@ -23,7 +24,7 @@ class MockYOLOModel:
         return [MockResult()]
 
 def test_adapter_normalization(monkeypatch):
-    from src.aeronetra.detection.adapters import UltralyticsAdapter
+    from aeronetra.detection.adapters import UltralyticsAdapter
 
     # Mock the loading logic
     def mock_load(self):

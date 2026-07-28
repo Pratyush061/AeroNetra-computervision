@@ -1,12 +1,19 @@
-"""
-Common model adapter interfaces for consistent object detection behavior.
-"""
+"""Model adapter interfaces for consistent object detection behavior."""
+
 from abc import ABC, abstractmethod
 from typing import Dict
-import numpy as np
+
+import logging
 import time
 
-from src.aeronetra.detection.types import BoundingBox, Detection, ModelPrediction
+import numpy as np
+
+from aeronetra.detection.types import BoundingBox, Detection, ModelPrediction
+
+logger = logging.getLogger(__name__)
+
+# Supported model name patterns for the factory function.
+_ULTRALYTICS_PATTERNS = ("yolo", "rtdetr", "rt-detr")
 
 class BaseDetector(ABC):
     """Abstract base class for all object detectors."""
@@ -38,14 +45,22 @@ class UltralyticsAdapter(BaseDetector):
     def load_model(self):
         try:
             from ultralytics import YOLO, RTDETR
-            # For RT-DETR
-            if "rtdetr" in self.weights_path.lower() or self.model_type.lower() == "rtdetr":
+        except ImportError:
+            raise ImportError(
+                "Please install ultralytics: pip install ultralytics"
+            )
+
+        try:
+            lower = self.model_type.lower().replace("-", "")
+            if "rtdetr" in lower:
                 self.model = RTDETR(self.weights_path)
             else:
                 self.model = YOLO(self.weights_path)
             self.model.to(self.device)
-        except ImportError:
-            raise ImportError("Please install ultralytics to use this adapter.")
+            logger.info(
+                "Loaded %s from %s on %s",
+                self.model_type, self.weights_path, self.device,
+            )
         except (AttributeError, TypeError, RuntimeError, OSError) as e:
             raise RuntimeError(f"Failed to load {self.model_type} from {self.weights_path}. Error: {e}")
 
@@ -98,10 +113,24 @@ class UltralyticsAdapter(BaseDetector):
         )
 
 # Factory function
-def get_model_adapter(model_name: str, weights_path: str, class_names: Dict[int, str], device: str = "cpu") -> BaseDetector:
-    """Returns the appropriate adapter instance based on the model name."""
-    lower_name = model_name.lower()
-    if "yolo" in lower_name or "rtdetr" in lower_name:
+def get_model_adapter(
+    model_name: str,
+    weights_path: str,
+    class_names: Dict[int, str],
+    device: str = "cpu",
+) -> BaseDetector:
+    """Returns the appropriate adapter instance based on the model name.
+
+    Supported model names (case-insensitive):
+        YOLOv8, YOLO11, YOLOv26, RT-DETR, RTDETR
+
+    Raises:
+        ValueError: If no adapter is available for the given model name.
+    """
+    lower_name = model_name.lower().replace("-", "")
+    if any(pattern.replace("-", "") in lower_name for pattern in _ULTRALYTICS_PATTERNS):
         return UltralyticsAdapter(model_name, weights_path, class_names, device)
-    else:
-        raise ValueError(f"No adapter available for model: {model_name}")
+    raise ValueError(
+        f"No adapter available for model: {model_name!r}. "
+        f"Supported patterns: {', '.join(_ULTRALYTICS_PATTERNS)}"
+    )

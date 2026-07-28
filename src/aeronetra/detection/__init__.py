@@ -1,6 +1,4 @@
-"""AeroNetra — UAV/drone-based vehicle detection and counting."""
-
-__version__ = "0.1.0"
+"""Object detection adapters and data types."""
 
 from aeronetra.detection.types import (
     BoundingBox,
@@ -9,9 +7,10 @@ from aeronetra.detection.types import (
     InferenceMetadata,
     ModelPrediction,
 )
-from aeronetra.detection.adapters import get_model_adapter
+from aeronetra.detection.adapters import BaseDetector, get_model_adapter
 
 __all__ = [
+    "BaseDetector",
     "BoundingBox",
     "CountSummary",
     "Detection",

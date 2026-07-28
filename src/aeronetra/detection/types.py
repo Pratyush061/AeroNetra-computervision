@@ -1,8 +1,7 @@
-"""
-Core data structures for object detection and counting.
-"""
+"""Core data structures for object detection and counting."""
+
 from dataclasses import dataclass, field
-from typing import List, Dict, Tuple
+from typing import Dict, List, Tuple
 
 @dataclass
 class BoundingBox:
@@ -11,6 +10,17 @@ class BoundingBox:
     ymin: float
     xmax: float
     ymax: float
+
+    def __post_init__(self):
+        """Validate that coordinates form a valid box."""
+        if self.xmin > self.xmax:
+            raise ValueError(
+                f"Invalid BoundingBox: xmin ({self.xmin}) > xmax ({self.xmax})"
+            )
+        if self.ymin > self.ymax:
+            raise ValueError(
+                f"Invalid BoundingBox: ymin ({self.ymin}) > ymax ({self.ymax})"
+            )
 
     @property
     def xyxy(self) -> Tuple[float, float, float, float]:
@@ -52,13 +62,25 @@ class ModelPrediction:
     image_height: int = 0
     inference_time_ms: float = 0.0
 
-    def filter_by_confidence(self, threshold: float):
-        """Filters detections below confidence threshold."""
-        self.detections = [d for d in self.detections if d.confidence >= threshold]
+    def filter_by_confidence(self, threshold: float) -> "ModelPrediction":
+        """Returns a new ModelPrediction with detections above the threshold."""
+        filtered = [d for d in self.detections if d.confidence >= threshold]
+        return ModelPrediction(
+            detections=filtered,
+            image_width=self.image_width,
+            image_height=self.image_height,
+            inference_time_ms=self.inference_time_ms,
+        )
 
-    def filter_by_class(self, allowed_classes: List[int]):
-        """Filters detections to only keep allowed classes."""
-        self.detections = [d for d in self.detections if d.class_id in allowed_classes]
+    def filter_by_class(self, allowed_classes: List[int]) -> "ModelPrediction":
+        """Returns a new ModelPrediction with only the allowed class IDs."""
+        filtered = [d for d in self.detections if d.class_id in allowed_classes]
+        return ModelPrediction(
+            detections=filtered,
+            image_width=self.image_width,
+            image_height=self.image_height,
+            inference_time_ms=self.inference_time_ms,
+        )
 
 
 @dataclass

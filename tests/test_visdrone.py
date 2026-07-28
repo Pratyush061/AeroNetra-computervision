@@ -1,6 +1,11 @@
 import pytest
 from pathlib import Path
-from src.aeronetra.datasets.visdrone import parse_visdrone_row, map_category, convert_to_yolo_format, convert_dataset
+from aeronetra.datasets.visdrone import (
+    parse_visdrone_row,
+    map_category,
+    convert_to_yolo_format,
+    convert_dataset,
+)
 
 def test_parse_visdrone_row():
     # Valid row

@@ -1,13 +1,14 @@
-"""
-OpenCV drawing utilities for detections.
-"""
-from typing import List, Tuple
-import cv2
-import numpy as np
+"""Drawing utilities for detections, ROI overlays, and result export."""
+
 from pathlib import Path
+from typing import List, Tuple
+
 import csv
+import cv2
 import json
-from src.aeronetra.detection.types import Detection, CountSummary
+import numpy as np
+
+from aeronetra.detection.types import CountSummary, Detection
 
 def draw_detections(image: np.ndarray, detections: List[Detection], color: Tuple[int, int, int] = (0, 255, 0), thickness: int = 2) -> np.ndarray:
     """Draws bounding boxes and labels on an image."""

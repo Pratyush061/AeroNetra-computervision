@@ -1,11 +1,17 @@
-"""
-VisDrone dataset parsing and conversion utilities.
+"""VisDrone dataset parsing and conversion utilities.
+
 Converts standard VisDrone annotations to YOLO format.
+Supports 'merged' (all vehicles → class 0) and 'separate' (per-type classes) modes.
 """
-from pathlib import Path
-from typing import Dict, Tuple, Optional
-import cv2
+
+import logging
 import os
+from pathlib import Path
+from typing import Dict, Optional, Tuple
+
+import cv2
+
+logger = logging.getLogger(__name__)
 
 # Original VisDrone Classes:
 # 0: ignored regions, 1: pedestrian, 2: people, 3: bicycle, 4: car, 5: van
@@ -44,26 +50,28 @@ def parse_visdrone_row(row_str: str) -> Optional[Dict[str, int]]:
         return None
 
 def map_category(category: int, mode: str = "separate") -> Optional[int]:
-    """
-    Maps VisDrone category to project class ID.
-    Returns None if category is ignored.
-    """
-    # Exclude non-vehicles (0=ignored, 1=pedestrian, 2=people, 11=others)
-    if category not in VISDRONE_VEHICLE_CLASSES and category != 4: # keep 4 for car just in case
-        pass
+    """Maps a VisDrone category to a YOLO class ID.
 
-    # Check explicitly
-    if category in [0, 1, 2, 11]:
+    Args:
+        category: VisDrone class ID (0–11).
+        mode: "merged" maps all vehicles to class 0;
+              "separate" maps to sequential IDs (car=0, van=1, …, bicycle=7).
+
+    Returns:
+        YOLO class ID, or None if the category is not a vehicle.
+    """
+    # Non-vehicle categories: 0=ignored, 1=pedestrian, 2=people, 11=others
+    if category not in VISDRONE_VEHICLE_CLASSES:
         return None
 
     if mode == "merged":
-        return 0 # All vehicles are class 0
-    elif mode == "separate":
-        # Map [3, 4, 5, 6, 7, 8, 9, 10] -> [0, 1, 2, 3, 4, 5, 6, 7]
-        # Just use order for separation. We will assume 0=car, 1=van etc for YOLO
-        # The exact mapping depends on YAML, but for code we can map to 0..N
-        mapping = {4: 0, 5: 1, 6: 2, 7: 3, 8: 4, 9: 5, 10: 6, 3: 7} # Assuming bicycle=7
-        return mapping.get(category)
+        return 0
+
+    if mode == "separate":
+        # Map {4:0, 5:1, 6:2, 7:3, 8:4, 9:5, 10:6, 3:7}
+        _SEPARATE_MAP = {4: 0, 5: 1, 6: 2, 7: 3, 8: 4, 9: 5, 10: 6, 3: 7}
+        return _SEPARATE_MAP.get(category)
+
     return None
 
 def convert_to_yolo_format(box: Dict[str, int], img_width: int, img_height: int) -> Optional[Tuple[float, float, float, float]]:
@@ -99,8 +107,19 @@ def convert_to_yolo_format(box: Dict[str, int], img_width: int, img_height: int)
 def convert_dataset(images_dir: Path, labels_dir: Path, output_dir: Path, mode: str = "separate", dry_run: bool = False) -> Dict[str, int]:
     """
     Converts a directory of VisDrone images and labels to YOLO format.
-    Saves in output_dir/images and output_dir/labels.
-    Returns conversion summary statistics.
+
+    Saves converted labels in output_dir/labels/ and symlinks (or copies)
+    images to output_dir/images/.
+
+    Args:
+        images_dir: Path to directory containing .jpg images.
+        labels_dir: Path to directory containing VisDrone .txt annotations.
+        output_dir: Destination directory for YOLO-format output.
+        mode: Conversion mode — "merged" or "separate".
+        dry_run: If True, compute stats without writing files.
+
+    Returns:
+        Dictionary of conversion statistics.
     """
     stats = {
         'total_images': 0,
