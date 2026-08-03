@@ -2,9 +2,11 @@
 
 from dataclasses import dataclass, field
 
+
 @dataclass
 class BoundingBox:
     """Represents a bounding box in xyxy format (xmin, ymin, xmax, ymax)."""
+
     xmin: float
     ymin: float
     xmax: float
@@ -45,6 +47,7 @@ class BoundingBox:
 @dataclass
 class Detection:
     """Represents a single detected object."""
+
     box: BoundingBox
     class_id: int
     class_name: str
@@ -56,6 +59,7 @@ class Detection:
 @dataclass
 class ModelPrediction:
     """Represents the complete set of detections from a model for one image."""
+
     detections: list[Detection] = field(default_factory=list)
     image_width: int = 0
     image_height: int = 0
@@ -85,6 +89,7 @@ class ModelPrediction:
 @dataclass
 class CountSummary:
     """Represents the counting results for an image."""
+
     image_id: str
     total_vehicles: int
     class_counts: dict[str, int]
@@ -94,6 +99,7 @@ class CountSummary:
 @dataclass
 class InferenceMetadata:
     """Metadata for an inference run to ensure reproducibility and tracking."""
+
     model_name: str
     package_version: str
     weights_path: str

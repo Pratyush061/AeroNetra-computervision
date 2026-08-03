@@ -11,14 +11,17 @@ from aeronetra.counting.ops import (
 )
 from aeronetra.counting.drawing import draw_detections, draw_roi
 
+
 def test_convert_xywh_to_xyxy():
     assert convert_xywh_to_xyxy(10, 20, 30, 40) == (10, 20, 40, 60)
+
 
 def test_convert_yolo_to_xyxy():
     # xc=0.5, yc=0.5, w=0.2, h=0.2, img=1000x1000
     # abs center: 500, 500, abs w=200, abs h=200
     # -> 400, 400, 600, 600
     assert convert_yolo_to_xyxy(0.5, 0.5, 0.2, 0.2, 1000, 1000) == (400, 400, 600, 600)
+
 
 def test_clip_box():
     box = BoundingBox(-10, 50, 1100, 950)
@@ -28,9 +31,10 @@ def test_clip_box():
     assert clipped.ymin == 50
     assert clipped.ymax == 950
 
+
 def test_filtering():
-    b1 = BoundingBox(0, 0, 10, 10) # Area 100, Center 5,5
-    b2 = BoundingBox(10, 10, 50, 50) # Area 1600, Center 30,30
+    b1 = BoundingBox(0, 0, 10, 10)  # Area 100, Center 5,5
+    b2 = BoundingBox(10, 10, 50, 50)  # Area 1600, Center 30,30
 
     d1 = Detection(b1, 0, "car", 0.9)
     d2 = Detection(b2, 1, "truck", 0.8)
@@ -45,6 +49,7 @@ def test_filtering():
     assert len(res) == 1
     assert res[0].class_name == "truck"
 
+
 def test_apply_nms():
     # Two overlapping boxes
     b1 = BoundingBox(10, 10, 50, 50)
@@ -55,6 +60,7 @@ def test_apply_nms():
     res = apply_nms([d1, d2], 0.5)
     assert len(res) == 1
     assert res[0].confidence == 0.9
+
 
 def test_drawing():
     img = np.zeros((100, 100, 3), dtype=np.uint8)
@@ -68,8 +74,10 @@ def test_drawing():
     out_roi = draw_roi(img, (20, 20, 80, 80))
     assert np.any(out_roi > 0)
 
+
 def test_counting_logic():
     from aeronetra.counting.ops import count_vehicles
+
     b1 = BoundingBox(10, 10, 50, 50)
     d1 = Detection(b1, 0, "car", 0.9)
     d2 = Detection(b1, 0, "car", 0.8)
@@ -80,8 +88,10 @@ def test_counting_logic():
     assert c_counts["car"] == 2
     assert c_counts["truck"] == 1
 
+
 def test_filtering_logic():
     from aeronetra.detection.types import ModelPrediction
+
     b1 = BoundingBox(10, 10, 50, 50)
     d1 = Detection(b1, 0, "car", 0.9)
     d2 = Detection(b1, 0, "car", 0.5)
@@ -97,6 +107,7 @@ def test_filtering_logic():
     assert len(filtered.detections) == 1
     assert filtered.detections[0].class_name == "car"
 
+
 def test_export_utilities(tmp_path):
     from aeronetra.counting.drawing import export_to_json, export_to_csv
     import json
@@ -108,7 +119,7 @@ def test_export_utilities(tmp_path):
     json_path = tmp_path / "test.json"
     export_to_json([d1], json_path)
 
-    with open(json_path, 'r') as f:
+    with open(json_path, "r") as f:
         data = json.load(f)
         assert len(data) == 1
         assert data[0]["class_name"] == "car"
@@ -116,7 +127,7 @@ def test_export_utilities(tmp_path):
     csv_path = tmp_path / "test.csv"
     export_to_csv([d1], csv_path)
 
-    with open(csv_path, 'r') as f:
+    with open(csv_path, "r") as f:
         reader = csv.reader(f)
         rows = list(reader)
         assert len(rows) == 2
