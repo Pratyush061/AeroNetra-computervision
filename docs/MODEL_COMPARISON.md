@@ -1,60 +1,69 @@
+---
+description: >-
+  A fair-comparison framework for YOLO-family and RT-DETR detectors on dense
+  aerial vehicle imagery.
+---
+
 # Model Comparison
 
-This document explains the nuances of comparing different object detection architectures (e.g., YOLO vs. RT-DETR) for aerial vehicle counting.
+A fair model comparison is more than running two weight files with the same confidence value. Architectures can differ in confidence calibration, post-processing, latency and behavior in dense scenes.
 
----
+## Fair evaluation workflow
 
-## Identical Thresholds Do Not Mean Identical Post-Processing
-
-Using the same confidence and IoU thresholds across different models (e.g., from `configs/inference/inference.yaml`) does **not** make architectures directly comparable.
-
-### 1. Confidence Calibration
-
-- **YOLO models** (v8, 11, 26) have different internal confidence calibrations. A 0.25 confidence score in YOLOv8 represents a different certainty level than 0.25 in YOLO11.
-- **RT-DETR** (transformer-based) outputs probabilities differently than anchor-based or anchor-free CNNs.
-- **Recommendation:** Tune confidence thresholds **per model** on a hold-out validation set to match a target precision/recall trade-off before comparing final counts.
-
-### 2. Non-Maximum Suppression (NMS)
-
-- **YOLO models** require NMS as a post-processing step to remove duplicate overlapping boxes. The codebase uses `cv2.dnn.NMSBoxes` in `src/aeronetra/counting/ops.py`.
-- **RT-DETR** is inherently end-to-end — the transformer decoder naturally suppresses duplicate predictions. **Do NOT apply additional NMS to RT-DETR outputs.** Doing so can accidentally suppress valid, dense detections.
-
-### 3. Maximum Detections Ceiling
-
-Models have a hardcoded limit on maximum detections per image. In `configs/inference/inference.yaml`:
-
-```yaml
-max_detections: 300
+```mermaid
+flowchart TD
+    A[Same validation split] --> B[Same input-size policy]
+    B --> C[Run each model]
+    C --> D[Tune threshold per model]
+    D --> E[Respect architecture-specific post-processing]
+    E --> F[Record latency + precision + recall + mAP]
+    F --> G[Analyze counting error]
+    G --> H[Choose model for target deployment]
 ```
 
-In dense aerial scenes (VisDrone) with hundreds of small vehicles, this ceiling can:
-- Artificially cap the vehicle count
-- Make a superior model look equivalent to a worse one (both hit the same ceiling)
-- Cause underreporting in heavy traffic areas
+## Architecture-level differences
 
-**Always note the `max_detections` value** when analyzing results from dense scenes.
+| Topic                  | YOLO family                             | RT-DETR                               |
+| ---------------------- | --------------------------------------- | ------------------------------------- |
+| Prediction style       | Dense detector outputs                  | Transformer-based end-to-end outputs  |
+| External NMS           | Common/expected                         | Should not be blindly added           |
+| Confidence calibration | Model-specific                          | Model-specific                        |
+| Dense-scene behavior   | Sensitive to suppression/max detections | Different duplicate-handling behavior |
+| Best use               | Must be measured                        | Must be measured                      |
 
----
+{% hint style="warning" %}
+Do not label one architecture “best” based on a single screenshot, one confidence threshold or a different validation subset.
+{% endhint %}
 
-## Model Architecture Summary
+## Thresholds are not universal
 
-| Architecture | NMS Required | Inference Speed | Small Object Performance | Notes |
-|-------------|:------------:|:---------------:|:------------------------:|-------|
-| YOLOv8 | ✅ Yes | Fast | Good | Well-established baseline |
-| YOLO11 | ✅ Yes | Fast | Good | Newer YOLO variant |
-| YOLOv26 | ✅ Yes | Fast | Good | Latest YOLO variant |
-| RT-DETR | ❌ No (end-to-end) | Moderate | Variable | Transformer-based; no NMS needed |
+A score of `0.25` from one architecture is not guaranteed to represent the same operating point as `0.25` from another. Tune thresholds on held-out validation data for the precision/recall balance you need.
 
-All models are accessed through the same `UltralyticsAdapter` — the only difference is the weights file and the NMS behavior.
+## Dense-scene ceiling
 
----
+If `max_detections` is set too low, a model can hit the ceiling before it has a chance to represent all objects in a crowded scene. Always record this setting when comparing vehicle counts.
 
-## Best Practices for Fair Comparison
+## Metrics to record
 
-1. **Same validation split.** Compare models on the **exact same images** — never compare results from different splits or random subsets.
-2. **Per-model threshold tuning.** Tune confidence thresholds individually on a hold-out set before comparing final counts.
-3. **Watch `max_det`.** In dense scenes, check if results are limited by the 300-detection ceiling.
-4. **Record metadata.** Use `InferenceMetadata` from `src/aeronetra/detection/types.py` to track exact parameters for every run.
-5. **Same input resolution.** Ensure all models use the same `image_size` (default: 640×640 from `inference.yaml`).
-6. **Do not apply NMS to RT-DETR.** This is the most common error when comparing architectures.
-7. **Statistical significance.** Single-image comparisons are anecdotal. Evaluate across the full validation set.
+| Metric            | Why it matters                              |
+| ----------------- | ------------------------------------------- |
+| Precision         | How many reported detections are correct    |
+| Recall            | How many real vehicles are found            |
+| mAP@50            | Detection quality at a looser IoU criterion |
+| mAP@50-95         | More demanding localization quality         |
+| Inference latency | Deployment feasibility                      |
+| Count error       | Direct relevance to the counting objective  |
+
+## Decision principle
+
+```mermaid
+flowchart LR
+    A[Highest mAP?] --> D{Deployment goal}
+    B[Lowest latency?] --> D
+    C[Lowest count error?] --> D
+    D -->|Research benchmark| E[Prioritize rigorous metrics]
+    D -->|Real-time UAV| F[Balance latency, recall and hardware]
+    D -->|Traffic counting| G[Prioritize count accuracy and dense-scene recall]
+```
+
+The right model depends on the problem definition and hardware constraints, not on model generation number alone.

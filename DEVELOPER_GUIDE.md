@@ -1,250 +1,176 @@
-# Developer Guide for AeroNetra
-
-Welcome to AeroNetra, a research project for UAV and drone-based vehicle detection and counting. This guide covers environment setup, development conventions, and how to work with the codebase.
-
-> **For AI coding agents:** See [AGENTS.md](AGENTS.md) instead — it contains authoritative rules, data structure contracts, and code patterns.
-
 ---
+description: >-
+  Developer onboarding, repository architecture, coding conventions, validation
+  workflow, and contribution guidance for AeroNetra.
+---
+
+# Developer Guide
+
+This guide explains how AeroNetra is organized and how to work on it without breaking reproducibility or mixing research phases.
+
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph Inputs
+        IMG[Aerial Images]
+        CFG[YAML Configs]
+        W[Model Weights]
+    end
+
+    subgraph Library[src/aeronetra]
+        DS[Datasets]
+        DET[Detection Adapters]
+        TYPES[Prediction Types]
+        CNT[Counting & Geometry]
+        VIS[Visualization]
+    end
+
+    subgraph Research
+        NB[Local Notebooks]
+        KG[Kaggle GPU Notebooks]
+        T[Tests]
+    end
+
+    IMG --> DS
+    W --> DET
+    CFG --> DET
+    DET --> TYPES
+    TYPES --> CNT
+    CNT --> VIS
+    DS --> NB
+    DET --> NB
+    KG --> W
+    T -. validates .-> Library
+```
 
 ## 1. Prerequisites
 
-- **Python 3.11** (strictly required — the development environment and CI target this version).
-- A virtual environment tool (`venv` or `conda`).
-- Git for version control.
-- (Optional) NVIDIA GPU with CUDA for model inference and training.
-- (Optional) Kaggle CLI for dataset downloads (`pip install kaggle`).
+* Python 3.11
+* Git
+* `venv` or Conda
+* Optional NVIDIA GPU for local acceleration
+* Kaggle GPU for training/evaluation when local compute is insufficient
 
----
+## 2. Install
 
-## 2. Environment Setup
-
-### Step 2.1: Clone the Repository
 ```bash
-git clone <repository_url>
+git clone <repository-url>
 cd AeroNetra-computervision
-```
-
-### Step 2.2: Create a Virtual Environment
-
-**Using venv:**
-```bash
 python -m venv venv
-venv\Scripts\activate        # Windows
-# source venv/bin/activate   # Linux/Mac
-```
-
-**Using conda:**
-```bash
-conda create -n aeronetra python=3.11
-conda activate aeronetra
-```
-
-### Step 2.3: Install Dependencies
-```bash
-pip install -r requirements.txt       # Runtime deps (torch, ultralytics, opencv, etc.)
-pip install -r requirements-dev.txt   # Dev deps (pytest, ruff)
-pip install -e .                      # Install aeronetra package in editable mode
-```
-
-### Step 2.4: Configure Environment Variables
-```bash
+source venv/bin/activate
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+pip install -e .
 cp .env.example .env
 ```
 
-Edit `.env` and set at minimum:
-- `DATASET_DIR` — absolute path to your dataset root (e.g., `C:\datasets\VisDrone` or `/data/visdrone`)
+On Windows, activate with `venv\Scripts\activate`.
 
-If `DATASET_DIR` is not set, the code falls back to `data/raw/` in the project root.
+Set `DATASET_DIR` in `.env` if your datasets live outside `data/raw/`.
 
-> **Never** place Kaggle API keys or other secrets in source code. Use `.env` (which is gitignored) or system environment variables.
+## 3. Core design contract
 
-### Step 2.5: Verify Installation
-```bash
-python -c "import aeronetra; print(aeronetra.__version__)"
+All detectors must flow through the same interface:
+
+```mermaid
+sequenceDiagram
+    participant App as Notebook / Script
+    participant Factory as get_model_adapter()
+    participant Adapter as Detector Adapter
+    participant Model as Model Backend
+    participant Pred as ModelPrediction
+
+    App->>Factory: model name + weights + device
+    Factory-->>App: adapter
+    App->>Adapter: load_model()
+    Adapter->>Model: load weights
+    App->>Adapter: predict(image)
+    Adapter->>Model: inference
+    Model-->>Adapter: raw detections
+    Adapter-->>App: standardized ModelPrediction
 ```
 
----
+Use package imports:
 
-## 3. Code Conventions
-
-### Import Paths
-Always import from the installed package, not the filesystem path:
 ```python
-# CORRECT
 from aeronetra.detection.adapters import get_model_adapter
-from aeronetra.detection.types import Detection, ModelPrediction
 from aeronetra.counting.ops import count_vehicles
-
-# INCORRECT — never use src. prefix
-from src.aeronetra.detection.adapters import get_model_adapter
 ```
 
-### Model Adapter Pattern
-All model interactions go through the adapter interface. See [docs/MODEL_INFERENCE.md](docs/MODEL_INFERENCE.md) for details.
+Do **not** import through `src.aeronetra...` and do not instantiate model libraries directly in notebooks when an adapter exists.
 
-```python
-adapter = get_model_adapter("YOLOv8", weights_path, class_names, device)
-adapter.load_model()                    # Must call before predict()
-prediction = adapter.predict(image)     # Returns ModelPrediction
+## 4. Prediction data model
+
+| Type                | Role                                          |
+| ------------------- | --------------------------------------------- |
+| `BoundingBox`       | Validated absolute `xyxy` coordinates         |
+| `Detection`         | One object, class, confidence and box         |
+| `ModelPrediction`   | Complete standardized prediction for an image |
+| `CountSummary`      | Counting result                               |
+| `InferenceMetadata` | Reproducibility metadata for an experiment    |
+
+Filtering methods should return new prediction objects rather than silently mutating shared state.
+
+## 5. Development workflow
+
+```mermaid
+flowchart LR
+    A[Create / edit module] --> B[Add or update tests]
+    B --> C[ruff check .]
+    C --> D[pytest]
+    D --> E[Run smallest relevant notebook]
+    E --> F[Record experiment metadata]
+    F --> G[Commit clean source only]
 ```
 
-Never instantiate models directly (e.g., `YOLO("path")`).
+### Quality commands
 
-### Data Structures
-Use dataclasses from `aeronetra.detection.types` for all detection results:
-- `BoundingBox` — xyxy absolute pixel coordinates; validates xmin ≤ xmax, ymin ≤ ymax on creation
-- `Detection` — single detected object
-- `ModelPrediction` — complete inference output; `filter_by_confidence()` and `filter_by_class()` return new instances (non-mutating)
-- `CountSummary` — counting results per image
-- `InferenceMetadata` — **all fields mandatory** for experiment tracking
-
----
-
-## 4. GPU Training Workflow (Kaggle)
-
-Due to hardware constraints, model training and evaluation are designed to run on **Kaggle** (free GPU access: T4 x2).
-
-### When to Use Kaggle
-- Training YOLOv8n, YOLO11n, or RT-DETR-l on VisDrone (50–100 epochs)
-- Evaluating trained models (mAP computation)
-- Batch inference with multiple models
-
-### When to Use Local
-- Interactive exploration with small images
-- Testing data loading and preprocessing
-- Running inference with a single pretrained model on CPU
-
-### Kaggle Notebooks
-
-Four self-contained notebooks in `kaggle/` folder:
-
-| # | Notebook | GPU | Purpose |
-|---|----------|-----|----------|
-| 01 | dataset_preparation | No | Convert VisDrone annotations → YOLO format |
-| 02 | model_training | **Yes** | Fine-tune YOLOv8n, YOLO11n, RT-DETR-l |
-| 03 | model_evaluation | **Yes** | Compute mAP@50, mAP@50-95, precision, recall |
-| 04 | inference_comparison | **Yes** | Side-by-side visual comparison of all models |
-
-### Setup on Kaggle
-
-1. **Add datasets to Kaggle:**
-   - `shisuiotsutsuki/visdrone2019-det` (public VisDrone dataset)
-   - (Optional) Your own VisDrone upload
-
-2. **Run notebook 01** (dataset prep — no GPU needed)
-   - Save output as Kaggle dataset: `aeronetra-visdrone-yolo`
-
-3. **Run notebook 02** (training — GPU T4 x2 required)
-   - Attach dataset from step 2
-   - Enable Accelerator → GPU T4 x2
-   - Training takes 1–3 hours
-   - Save output as Kaggle dataset: `aeronetra-trained-weights`
-
-4. **Run notebooks 03–04** (evaluation & inference — GPU T4 x2 recommended)
-   - Attach both datasets from steps 2 and 3
-   - Results saved to `/kaggle/working/`
-
-5. **Download trained weights locally**
-   - Download `best_weights/*.pt` files
-   - Place in `outputs/models/` directory
-   - Use in local notebooks via `get_model_adapter()`
-
-See [kaggle/README.md](../kaggle/README.md) for full setup instructions.
-
----
-
-## 5. Running Tests and Linting
-
-### OpenCV
-Use `cv2` (OpenCV) for image loading, bounding-box drawing, geometric filtering, ROI logic, and NMS (`cv2.dnn.NMSBoxes`).
-
----
-
-## 4. Jupyter Notebooks
-
-Notebooks are in `notebooks/` and follow a numbered progression (00–08). Launch with:
 ```bash
-jupyter notebook
+ruff check .
+pytest
+pytest tests/test_counting.py -v
 ```
 
-### Notebook Rules
-- **Call library functions** from `src/aeronetra/` — do not duplicate core logic in notebook cells.
-- **Keep cells short** and logically ordered.
-- **Model inference notebooks** (03–06) are independent per architecture. Load weights explicitly without training.
-- **Never auto-download** model weights or datasets in notebook cells.
-- **Clear outputs before committing:**
-  ```bash
-  jupyter nbconvert --clear-output --inplace notebooks/*.ipynb
-  ```
+Before committing notebooks:
 
----
-
-## 5. Working with Data and Experiments
-
-### Dataset Management
-- Place raw datasets in `data/raw/` or set `DATASET_DIR` environment variable.
-- Use `aeronetra.config.get_data_dir()` to resolve the dataset path — never hardcode.
-- Preserve raw data; write conversions to `data/processed/` and outputs to `outputs/`.
-
-### Recording Experiment Metadata
-Use the `InferenceMetadata` dataclass from `src/aeronetra/detection/types.py` for every inference run:
-
-```python
-from aeronetra.detection.types import InferenceMetadata
-
-metadata = InferenceMetadata(
-    model_name="YOLOv8n",
-    package_version="8.0.0",
-    weights_path="outputs/models/yolov8n.pt",
-    dataset_version="VisDrone2019-DET-val",
-    image_size=(640, 640),
-    confidence_threshold=0.25,
-    iou_threshold=0.45,
-    seed=42,
-    device="cuda",
-    timing_ms=15.3
-)
+```bash
+jupyter nbconvert --clear-output --inplace notebooks/*.ipynb
 ```
 
-All fields are mandatory. Never fabricate benchmark results or claim a model is "best" without measured evidence from the same validation split.
+## 6. Data rules
 
-### Dataset Validation
-Before training, validate your dataset with:
+* Keep `data/raw/` immutable.
+* Write conversions to `data/processed/`.
+* Resolve dataset paths from configuration/environment variables.
+* Never commit credentials, raw datasets, trained weights, or generated outputs.
+* Validate converted datasets before training.
+
 ```bash
 python scripts/validate_dataset.py --dataset-dir <path> --num-classes <n>
 ```
 
-This checks for missing image-label pairs, malformed labels, zero-area boxes, out-of-bounds coordinates, and other common issues.
+## 7. Local vs Kaggle
 
----
+| Local machine               | Kaggle GPU                |
+| --------------------------- | ------------------------- |
+| Environment checks          | Training                  |
+| Dataset inspection          | Full evaluation           |
+| Small CPU inference         | Multi-model benchmarking  |
+| Visualization and debugging | GPU-heavy comparison runs |
 
-## 6. Testing and Linting
+The intended loop is **prepare → train on Kaggle → download weights → analyze locally through the adapter interface**.
 
-```bash
-# Linter
-ruff check .
+## 8. Do not accidentally expand scope
 
-# All tests
-pytest
+{% hint style="warning" %}
+The current production-quality research path is static-image detection and counting. Tracking, geospatial analytics and edge deployment belong to later phases unless explicitly introduced with tests and documentation.
+{% endhint %}
 
-# Specific test file with verbose output
-pytest tests/test_counting.py -v
-```
+Avoid:
 
-- All new modules in `src/aeronetra/` **must** have accompanying tests in `tests/`.
-- Test adapters using **mocks** — do not require real model weights in tests.
-- Fixtures live in `tests/fixtures/` (sample VisDrone labels, test images).
-
----
-
-## 7. What NOT to Do
-
-- ❌ Add frontend frameworks, web servers, or UI code
-- ❌ Fabricate benchmark results or training run outputs
-- ❌ Auto-download datasets or model weights
-- ❌ Hardcode absolute filesystem paths
-- ❌ Commit notebook outputs or large binary files
-- ❌ Place secrets (API keys, credentials) in source code
-- ❌ Claim stubs (`uavdt.py`, `evaluation/`, `utils/`) are functional
-
-By following these guidelines, you help maintain a clean, reproducible research repository.
+* fabricated benchmark values
+* automatic downloads hidden inside notebooks
+* hardcoded local filesystem paths
+* direct model-specific logic scattered across notebooks
+* applying YOLO-specific post-processing blindly to RT-DETR

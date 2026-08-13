@@ -1,61 +1,75 @@
+---
+description: >-
+  Known technical limitations, research risks and currently incomplete modules
+  in AeroNetra.
+---
+
 # Limitations
 
-Known limitations and constraints of the AeroNetra project in its current phase.
+A professional research project should make its limitations easy to find. AeroNetra currently focuses on **static aerial-image detection and image-level counting**, and several later capabilities are intentionally incomplete.
 
----
+## Capability boundary
 
-## Phase Scope
+```mermaid
+flowchart LR
+    A[Static image] --> B[Detection]
+    B --> C[Filtering]
+    C --> D[Image-level count]
+    D --> E[Implemented scope]
 
-- **Currently Phase 1 only** — static image vehicle detection and counting. Video tracking, unique vehicle counting across frames, geospatial analytics, and edge deployment are not implemented.
+    V[Video] -. future .-> T[Tracking]
+    T -. future .-> U[Unique counts]
+    U -. future .-> G[Geospatial analytics]
+```
 
----
+## Detection risks
 
-## Detection Pipeline Limitations
+| Limitation                | Practical impact                                  | Mitigation direction                   |
+| ------------------------- | ------------------------------------------------- | -------------------------------------- |
+| Tiny aerial objects       | Missed vehicles                                   | Aerial fine-tuning, resolution studies |
+| Dense scenes              | Suppression/cap-related undercount                | Tune thresholds and max detections     |
+| Domain shift              | Poor transfer from ground imagery                 | Validate on aerial datasets            |
+| Confidence mismatch       | Unfair cross-model comparisons                    | Tune operating point per model         |
+| Single-image adapter flow | No native batch/video pipeline                    | Add only when phase scope expands      |
+| Architecture-specific NMS | Incorrect post-processing can remove real objects | Keep behavior model-aware              |
 
-| Limitation | Impact | Details |
-|------------|--------|---------|
-| **Max detections ceiling** | Undercounting in dense scenes | Ultralytics models have a hardcoded `max_det=300` limit. In dense VisDrone scenes with hundreds of vehicles, this cap artificially limits the count. Configured in `configs/inference/inference.yaml`. |
-| **Single-image inference only** | No batch processing | `adapter.predict()` accepts one image at a time. Batch inference is not supported by the adapter interface. |
-| **NMS behavior differs by architecture** | Inconsistent cross-model comparison | YOLO models require post-processing NMS. RT-DETR is end-to-end and should NOT have NMS applied. Applying NMS to RT-DETR can suppress valid dense detections. |
-| **No multi-class filtering in adapter** | Manual post-processing needed | The adapter returns all detected classes. Use `ModelPrediction.filter_by_class()` to keep only vehicle classes after prediction. |
-| **Confidence calibration varies** | Thresholds not comparable across models | A 0.25 confidence in YOLOv8 represents different certainty than 0.25 in RT-DETR. Per-model threshold tuning is recommended. |
+## Dataset risks
 
----
+* raw annotations may contain malformed or boundary-crossing boxes
+* class definitions differ across datasets
+* tiny boxes dominate some aerial scenes
+* a converter can silently change class distribution if statistics are not checked
 
-## Dataset Limitations
+Always run the validator before training.
 
-| Limitation | Impact |
-|------------|--------|
-| **Tiny objects in aerial imagery** | VisDrone vehicles can be only a few pixels wide, making detection extremely challenging. Small object detection is a known hard problem. |
-| **Domain shift** | Models pretrained on ground-level datasets (COCO, UA-DETRAC) perform poorly on aerial imagery without fine-tuning. |
-| **Label quality** | Raw datasets may contain out-of-bounds boxes, zero-area annotations, ignored regions, and class ambiguity. Always run `scripts/validate_dataset.py` before training. |
-| **UAVDT not implemented** | `src/aeronetra/datasets/uavdt.py` is a stub that raises `NotImplementedError`. Do not rely on it. |
+## Incomplete modules
 
----
+| Area                      | Current status                  |
+| ------------------------- | ------------------------------- |
+| UAVDT parser              | Stub / not implemented          |
+| Evaluation package        | Incomplete                      |
+| Generic utilities package | Minimal/incomplete              |
+| Experiment configs        | Not fully populated             |
+| Model-specific configs    | Not fully populated             |
+| Tracking                  | Not implemented in core Phase 1 |
 
-## Module Gaps
+{% hint style="warning" %}
+Do not turn planned modules into documentation claims. A documented roadmap item is not an implemented feature.
+{% endhint %}
 
-| Module | Status |
-|--------|--------|
-| `src/aeronetra/evaluation/` | Empty (`.gitkeep` only) — no evaluation metrics implemented |
-| `src/aeronetra/utils/` | Empty (`.gitkeep` only) — no utility functions implemented |
-| `src/aeronetra/datasets/uavdt.py` | Stub — raises `NotImplementedError` |
-| `configs/experiments/` | Empty — no experiment configs defined |
-| `configs/models/` | Empty — no model-specific configs defined |
+## Performance reality
 
----
+Deep detectors can reduce live-camera responsiveness when inference runs on the same CPU/GPU resources as visualization or simulation. Real deployment work will need measured profiling rather than assuming notebook speed translates to a UAV pipeline.
 
-## Testing Gaps
+```mermaid
+flowchart TD
+    A[Camera FPS] --> D{Real-time budget}
+    B[Model inference latency] --> D
+    C[Pre/post-processing + ROS transport] --> D
+    D -->|within budget| E[Real-time candidate]
+    D -->|over budget| F[Optimize / resize / accelerate / decouple]
+```
 
-- `src/aeronetra/detection/types.py` — dataclass tests missing
-- `src/aeronetra/visualization/plots.py` — no tests
-- `src/aeronetra/config.py` — no tests
-- `scripts/download_dataset.py` and `scripts/validate_dataset.py` — no tests
+## Research interpretation
 
----
-
-## Resource Requirements
-
-- **GPU:** Recommended for inference notebooks (03–08). Required for training (notebook 07).
-- **Storage:** VisDrone full dataset is several GB. Ensure sufficient disk space.
-- **Kaggle credentials:** Required only for `scripts/download_dataset.py`.
+Results should always be tied to the exact dataset split, model weights, thresholds, input size, device and post-processing path. Without that metadata, comparisons are descriptive rather than reproducible.

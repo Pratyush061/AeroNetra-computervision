@@ -1,57 +1,77 @@
+---
+description: >-
+  A phased roadmap from static aerial detection to tracking, traffic analytics
+  and UAV/edge integration.
+---
+
 # Research Scope
 
-The AeroNetra project is divided into multiple phases to incrementally build capabilities for UAV surveillance and traffic analysis.
+AeroNetra is intentionally phased. Each stage should create a reliable foundation for the next rather than combining detection, tracking, mapping and deployment before the earlier layers are measurable.
 
----
+## Roadmap
 
-## Phase Overview
+```mermaid
+flowchart LR
+    P1[Phase 1<br/>Static Detection & Counting] --> P2[Phase 2<br/>Aerial Fine-tuning]
+    P2 --> P3[Phase 3<br/>Video Tracking & Unique Counts]
+    P3 --> P4[Phase 4<br/>Traffic + Geospatial Analytics]
+    P4 --> P5[Phase 5<br/>Edge / Simulated UAV Integration]
+```
 
-| Phase | Focus | Status | GPU Required |
-|:-----:|-------|:------:|:------------:|
-| **1** | Vehicle detection and image counting | 🟢 **Current** | Recommended |
-| **2** | Fine-tuning on aerial datasets | 🔲 Future | Yes |
-| **3** | Video tracking and unique vehicle counting | 🔲 Future | Yes |
-| **4** | Geospatial and traffic analytics | 🔲 Future | Yes |
-| **5** | Edge deployment or simulated UAV integration | 🔲 Future | Varies |
+| Phase | Primary question                                                       | Status     |
+| ----- | ---------------------------------------------------------------------- | ---------- |
+| **1** | Can we detect and count vehicles reliably in individual aerial images? | 🟢 Current |
+| **2** | Can aerial fine-tuning improve detection quality?                      | Planned    |
+| **3** | Can vehicles retain identities across frames?                          | Planned    |
+| **4** | Can tracks become useful traffic/geospatial signals?                   | Planned    |
+| **5** | Can the pipeline operate efficiently in a UAV or simulation loop?      | Planned    |
 
----
+## Phase 1 — Detection and image counting
 
-## Phase 1: Vehicle Detection and Image Counting (CURRENT)
+Build the reusable research foundation:
 
-- **Goal:** Detect and accurately count vehicles in static aerial or drone images.
-- **Methods:** Object-detection models (YOLOv8, YOLO11, YOLOv26, RT-DETR), bounding-box processing, and OpenCV for geometry and counting.
-- **Focus:** Building a robust, reproducible pipeline with standardized adapter interface, data structures, and experiment tracking.
-- **Datasets:** VisDrone (primary). UAVDT converter is stubbed but not implemented.
-- **Deliverables:** Inference notebooks (03–06), counting utilities, dataset converter, validation tooling.
+* standardized detector adapter
+* validated prediction data structures
+* VisDrone conversion and validation
+* filtering, ROI and counting utilities
+* model-comparison workflow
+* reproducible experiment metadata
 
-## Phase 2: Fine-Tuning on Aerial Datasets
+**Success means:** the same image and configuration can be rerun and interpreted consistently.
 
-- **Goal:** Improve model accuracy specifically for aerial perspectives.
-- **Methods:** Transfer learning and fine-tuning using VisDrone and other drone imagery datasets.
-- **Prerequisite:** Phase 1 pipeline complete, validated dataset, GPU access.
+## Phase 2 — Aerial fine-tuning
 
-## Phase 3: Video Tracking and Unique Vehicle Counting
+Use aerial datasets to improve performance on small objects, top-down viewpoints and dense traffic. Training belongs on GPU-capable infrastructure such as Kaggle when local hardware is insufficient.
 
-- **Goal:** Track vehicles across video frames and count unique instances (not just per-frame detections).
-- **Methods:** Multi-object tracking (MOT) algorithms, trajectory analysis.
-- **Prerequisite:** Phases 1–2, video dataset, tracking library integration.
+## Phase 3 — Video tracking
 
-## Phase 4: Geospatial and Traffic Analytics
+```mermaid
+flowchart LR
+    A[Detector per frame] --> B[Association]
+    B --> C[Persistent Track IDs]
+    C --> D[Trajectory History]
+    D --> E[Unique Vehicle Counts]
+```
 
-- **Goal:** Derive actionable insights from tracking data.
-- **Methods:** Speed estimation, density maps, flow analysis, integration with geospatial coordinates.
-- **Prerequisite:** Phases 1–3, geospatial tooling.
+This phase changes the meaning of “count”: persistent identity replaces independent boxes.
 
-## Phase 5: Edge Deployment or Simulated UAV Integration
+## Phase 4 — Analytics
 
-- **Goal:** Deploy the solution to run efficiently on edge devices or simulated drone hardware.
-- **Methods:** Model optimization (TensorRT, ONNX), real-time processing pipelines.
-- **Prerequisite:** Phases 1–4, edge hardware or simulator.
+Potential outputs include traffic density, directional flow, trajectory statistics and eventually geospatially grounded measurements. These require calibrated assumptions and should not be inferred from raw bounding boxes alone.
 
----
+## Phase 5 — UAV / edge integration
 
-## Important Notes
+The long-term integration layer can connect perception to simulated or real UAV systems, with attention to model optimization, real-time latency, ROS 2 messaging and flight-stack boundaries.
 
-- **Do not implement future-phase features** unless explicitly requested. The codebase should remain focused on the current phase.
-- **Do not fabricate results** for phases that have not been executed.
-- **Phase boundaries are strict** — mixing phase concerns (e.g., adding tracking code during Phase 1) creates maintenance burden and scope creep.
+```mermaid
+flowchart LR
+    CAM[Camera] --> CV[AeroNetra Perception]
+    CV --> ROS[ROS 2 Interface]
+    ROS --> FC[PX4 / Flight Stack]
+    FC --> SIM[Gazebo / UAV]
+    SIM --> CAM
+```
+
+{% hint style="warning" %}
+This diagram describes the intended integration direction. It does not mean the later phases are already implemented in the core computer-vision package.
+{% endhint %}

@@ -1,124 +1,114 @@
+---
+description: >-
+  AeroNetra's detector-adapter architecture, standardized prediction objects,
+  inference lifecycle, filtering and error handling.
+---
+
 # Model Inference Guide
 
-This document describes how object detection inference is structured and executed in the AeroNetra project.
+AeroNetra isolates model-specific behavior behind a detector adapter. This lets counting, visualization and experiment code work with one prediction format even when the underlying architecture changes.
 
----
+## Inference architecture
 
-## The Model Adapter Interface
-
-All object detectors interact through a common adapter interface defined in `src/aeronetra/detection/adapters.py`. This ensures consistent behavior across architectures.
-
-### `BaseDetector` (Abstract Base Class)
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `load_model()` | `() → None` | Loads weights into memory and moves model to target device. **Must be called before `predict()`.** |
-| `predict()` | `(image: np.ndarray, conf_thresh: float, iou_thresh: float) → ModelPrediction` | Runs inference on a single image. Returns standardized `ModelPrediction`. |
-
-### `UltralyticsAdapter`
-
-The only currently implemented adapter. Supports all models from the `ultralytics` package:
-- **YOLO:** YOLOv8, YOLO11, YOLOv26
-- **RT-DETR:** RT-DETR-l, RT-DETR-x
-
-### `get_model_adapter()` Factory Function
-
-```python
-get_model_adapter(
-    model_name: str,          # "YOLOv8", "YOLO11", "YOLOv26", "RT-DETR"
-    weights_path: str,        # Path to .pt weights file
-    class_names: dict,        # {0: "vehicle"} or {0: "bicycle", 1: "car", ...}
-    device: str = "cpu"       # "cpu" or "cuda"
-) → BaseDetector
+```mermaid
+flowchart LR
+    A[Image ndarray] --> B[get_model_adapter]
+    B --> C[UltralyticsAdapter]
+    C --> D{Backend}
+    D --> Y[YOLO family]
+    D --> R[RT-DETR]
+    Y --> E[Raw outputs]
+    R --> E
+    E --> F[Normalize]
+    F --> G[ModelPrediction]
+    G --> H[Filtering]
+    H --> I[Counting / Drawing / Export]
 ```
 
----
+## Lifecycle
 
-## Usage Flow
+```mermaid
+sequenceDiagram
+    participant User
+    participant Adapter
+    participant Backend
+    User->>Adapter: create via factory
+    User->>Adapter: load_model()
+    Adapter->>Backend: load weights on device
+    User->>Adapter: predict(image, conf, iou)
+    Adapter->>Backend: run inference
+    Backend-->>Adapter: raw detections
+    Adapter-->>User: ModelPrediction
+```
+
+## Basic usage
 
 ```python
 from aeronetra.detection.adapters import get_model_adapter
 
-# Step 1: Create adapter via factory
 adapter = get_model_adapter(
     model_name="YOLOv8",
     weights_path="outputs/models/yolov8n.pt",
     class_names={0: "vehicle"},
-    device="cuda"  # or "cpu"
+    device="cuda",
 )
 
-# Step 2: Load model explicitly (REQUIRED before predict)
 adapter.load_model()
+prediction = adapter.predict(image, conf_thresh=0.25, iou_thresh=0.45)
+```
 
-# Step 3: Run inference — returns ModelPrediction
-prediction = adapter.predict(image_array, conf_thresh=0.25, iou_thresh=0.45)
+Then operate on the standardized result:
 
-# Step 4: Use standardized outputs
-for det in prediction.detections:
-    print(det.box.xyxy, det.class_name, det.confidence)
+```python
+filtered = prediction.filter_by_confidence(0.5)
 
-# Optional: Filter results
-prediction.filter_by_confidence(0.5)
-prediction.filter_by_class([0, 1, 2])
-
-# Step 5: Count and draw
 from aeronetra.counting.ops import count_vehicles
 from aeronetra.counting.drawing import draw_detections
 
-total, by_class = count_vehicles(prediction.detections)
-annotated = draw_detections(image_array.copy(), prediction.detections)
+total, by_class = count_vehicles(filtered.detections)
+annotated = draw_detections(image.copy(), filtered.detections)
 ```
 
----
-
-## Standardized Outputs
-
-Regardless of model architecture, the adapter normalizes all outputs into these dataclasses from `src/aeronetra/detection/types.py`:
+## Standard output model
 
 ### `ModelPrediction`
-| Field | Type | Description |
-|-------|------|-------------|
-| `detections` | `List[Detection]` | All detected objects |
-| `image_width` | `int` | Input image width in pixels |
-| `image_height` | `int` | Input image height in pixels |
-| `inference_time_ms` | `float` | Inference time in milliseconds |
 
-Methods: `filter_by_confidence(threshold)`, `filter_by_class(allowed_classes)`
+Contains detections, image dimensions and inference timing.
 
 ### `Detection`
-| Field | Type | Description |
-|-------|------|-------------|
-| `box` | `BoundingBox` | Bounding box in xyxy absolute pixel coordinates |
-| `class_id` | `int` | Integer class ID |
-| `class_name` | `str` | Human-readable class name |
-| `confidence` | `float` | Confidence score (0.0–1.0) |
-| `source_model` | `str` | Model identifier (default: "unknown") |
-| `image_id` | `str` | Image identifier (default: "unknown") |
+
+Contains the bounding box, class ID, class name, confidence, source model and image identifier.
 
 ### `BoundingBox`
-| Field | Type | Description |
-|-------|------|-------------|
-| `xmin`, `ymin`, `xmax`, `ymax` | `float` | Absolute pixel coordinates (xyxy format) |
 
-Properties: `width`, `height`, `area`, `center`, `xyxy`
+Uses absolute pixel coordinates in `xyxy` order and exposes useful geometry such as width, height, area and center.
 
----
+## Post-processing is architecture-aware
 
-## Error Handling
+```mermaid
+flowchart TD
+    A[ModelPrediction] --> B{Architecture}
+    B -->|YOLO| C[Confidence / class filters]
+    C --> D[Optional NMS / ROI / geometry filters]
+    B -->|RT-DETR| E[Confidence / class / ROI filters]
+    E --> F[Do not add YOLO-style NMS blindly]
+    D --> G[Count]
+    F --> G
+```
 
-| Scenario | Error | Solution |
-|----------|-------|----------|
-| `predict()` called before `load_model()` | `RuntimeError` | Always call `adapter.load_model()` first |
-| Weights file not found | `FileNotFoundError` | Verify `weights_path` is correct |
-| Invalid model name in factory | `ValueError` | Use supported names: "YOLOv8", "YOLO11", "YOLOv26", "RT-DETR" |
+{% hint style="warning" %}
+RT-DETR is designed as an end-to-end detector. Do not automatically apply the same external NMS path used for YOLO outputs.
+{% endhint %}
 
----
+## Common failures
 
-## Important Rules
+| Problem                    | Meaning                                  | Fix                                                                  |
+| -------------------------- | ---------------------------------------- | -------------------------------------------------------------------- |
+| `predict()` before loading | Adapter is not initialized               | Call `load_model()` first                                            |
+| Missing weights            | Path is invalid                          | Check explicit weights path                                          |
+| Unsupported model name     | Factory cannot resolve backend           | Use a supported adapter name                                         |
+| CPU appears slow           | Deep detector inference is compute-heavy | Use GPU or reduce workload/input size after measuring quality impact |
 
-- **Never instantiate models directly** — always use `get_model_adapter()`.
-- **Never auto-download weights** — weights paths must be explicitly provided.
-- **Single image only** — `predict()` takes one NumPy array; batch inference is not supported.
-- **Device must be specified** — set `device="cuda"` for GPU or `device="cpu"` for CPU.
-- **Load thresholds from YAML** — use `configs/inference/inference.yaml` values (conf=0.25, iou=0.45), not `config.py` defaults (conf=0.5).
-- **Do not apply NMS to RT-DETR** — it is end-to-end and handles suppression internally.
+## Reproducible inference
+
+For comparisons, record model name/version, weights, dataset split, image size, confidence threshold, IoU threshold, seed, device and inference time. A screenshot alone is not an experiment result.

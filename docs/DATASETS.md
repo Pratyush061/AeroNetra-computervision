@@ -1,170 +1,108 @@
+---
+description: >-
+  How AeroNetra organizes, validates and converts aerial datasets, with VisDrone
+  as the implemented primary dataset.
+---
+
 # Datasets Guide
 
-This document outlines the usage, structure, and class mappings for datasets within the AeroNetra project.
+AeroNetra treats dataset handling as part of the research pipeline, not as an afterthought. Raw data stays untouched, conversions are explicit, and validation happens before training.
 
----
+## Dataset lifecycle
 
-## Dataset Selection
+```mermaid
+flowchart LR
+    A[Raw Dataset] --> B[Parser]
+    B --> C[Class Mapping]
+    C --> D[Coordinate Validation]
+    D --> E[YOLO-format Conversion]
+    E --> F[Processed Dataset]
+    F --> G[Dataset Validator]
+    G -->|valid| H[Training / Evaluation]
+    G -->|issues| I[Fix conversion or source assumptions]
+```
 
-We prioritize datasets in the following order:
-1. **VisDrone** — Primary dataset for aerial vehicle detection (many small objects, dense scenes). **Implemented.**
-2. **UAVDT** — Secondary drone traffic dataset, focus on tracking and detection. **NOT implemented** (`src/aeronetra/datasets/uavdt.py` is a stub that raises `NotImplementedError`).
-3. **UA-DETRAC** — Optional fixed-camera dataset for domain comparison. **NOT implemented.**
-4. **SampleDataset** — Small or generated fixtures for local testing only (in `tests/fixtures/`).
+## Supported status
 
-Prefer official sources over unofficial Kaggle mirrors. Always verify the license and contents if using Kaggle.
+| Dataset       | Intended use                     | Status            |
+| ------------- | -------------------------------- | ----------------- |
+| **VisDrone**  | Primary aerial detection dataset | ✅ Implemented     |
+| **UAVDT**     | Drone traffic detection/tracking | ⚠️ Stub only      |
+| **UA-DETRAC** | Optional domain comparison       | ⬜ Not implemented |
+| Test fixtures | Unit/local validation            | ✅ Included        |
 
----
+{% hint style="warning" %}
+`src/aeronetra/datasets/uavdt.py` is a stub that raises `NotImplementedError`. Do not describe UAVDT as supported until a parser, tests and configuration are implemented.
+{% endhint %}
 
-## Directory Structure
+## Directory contract
 
 ```
 data/
-├── raw/          ← Original, unmodified datasets (NEVER modify)
-├── interim/      ← Intermediate transformed data
-├── processed/    ← Final data ready for modeling (YOLO format output)
-└── samples/      ← Small sample subsets for quick testing
+├── raw/        # original, immutable files
+├── interim/    # temporary transformations
+├── processed/  # model-ready converted data
+└── samples/    # small local/test subsets
 ```
 
-All directories under `data/` are gitignored. Configure the dataset root via the `DATASET_DIR` environment variable, or let the code fall back to `data/raw/`.
+Use `DATASET_DIR` or the project configuration helpers instead of hardcoded absolute paths.
 
----
+## VisDrone class mapping
 
-## VisDrone (Primary — Implemented)
+The implemented converter lives in `src/aeronetra/datasets/visdrone.py`.
 
-### Expected Folder Layout
+| VisDrone ID | Category        | Vehicle target |
+| :---------: | --------------- | :------------: |
+|      0      | ignored region  |       No       |
+|      1      | pedestrian      |       No       |
+|      2      | people          |       No       |
+|      3      | bicycle         |       Yes      |
+|      4      | car             |       Yes      |
+|      5      | van             |       Yes      |
+|      6      | truck           |       Yes      |
+|      7      | tricycle        |       Yes      |
+|      8      | awning-tricycle |       Yes      |
+|      9      | bus             |       Yes      |
+|      10     | motor           |       Yes      |
+|      11     | others          |       No       |
 
+## Conversion modes
+
+```mermaid
+flowchart TD
+    A[VisDrone annotation] --> B{Mapping mode}
+    B -->|merged| C[All vehicle classes -> class 0]
+    B -->|separate| D[Vehicle categories -> sequential class IDs]
+    C --> E[Binary vehicle detector]
+    D --> F[Per-class vehicle detector]
 ```
-data/raw/VisDrone2019/
-├── VisDrone2019-DET-train/
-│   ├── images/
-│   └── annotations/
-├── VisDrone2019-DET-val/
-│   ├── images/
-│   └── annotations/
-└── VisDrone2019-DET-test-dev/
-    ├── images/
-    └── annotations/
-```
 
-### VisDrone Class IDs and Vehicle Mapping
+* **Merged:** useful when the main question is “vehicle or not?”
+* **Separate:** useful when class-specific counts matter.
 
-The converter is in `src/aeronetra/datasets/visdrone.py`.
+## Important converter functions
 
-| VisDrone ID | Category | Vehicle? | Notes |
-|:-----------:|----------|:--------:|-------|
-| 0 | ignored region | ❌ | Skipped during conversion |
-| 1 | pedestrian | ❌ | Skipped |
-| 2 | people | ❌ | Skipped |
-| 3 | bicycle | ✅ | Included |
-| 4 | car | ✅ | Included |
-| 5 | van | ✅ | Included |
-| 6 | truck | ✅ | Included |
-| 7 | tricycle | ✅ | Included |
-| 8 | awning-tricycle | ✅ | Included |
-| 9 | bus | ✅ | Included |
-| 10 | motor | ✅ | Included |
-| 11 | others | ❌ | Skipped |
+| Function                   | Purpose                                       |
+| -------------------------- | --------------------------------------------- |
+| `parse_visdrone_row()`     | Parse one annotation row                      |
+| `map_category()`           | Map original category to target class         |
+| `convert_to_yolo_format()` | Normalize coordinates and clip boundaries     |
+| `convert_dataset()`        | Convert an entire split and return statistics |
 
-### Conversion Modes
+Always retain the returned conversion statistics; they help catch unexpected class loss or malformed annotations.
 
-Two modes are supported by the converter:
-
-- **`"merged"`** — All vehicle classes (3–10) mapped to a single class `0` ("vehicle"). Use for binary vehicle/non-vehicle detection.
-- **`"separate"`** — Vehicle classes remapped sequentially starting from `0` (bicycle=0, car=1, van=2, …). Use for per-class vehicle counting.
-
-### Key Converter Functions
-
-| Function | Purpose |
-|----------|---------|
-| `parse_visdrone_row(line)` | Parses a single VisDrone annotation line |
-| `map_category(visdrone_class_id, mode)` | Maps VisDrone ID to YOLO class ID (returns `None` for non-vehicle) |
-| `convert_to_yolo_format(annotations, img_w, img_h, mode)` | Converts annotations to normalized YOLO format with boundary clipping |
-| `convert_dataset(source_dir, output_dir, mode)` | Batch converts a full split; **returns a statistics dict** — always capture and log it |
-
-### Dataset YAML Configs
-
-Located in `configs/datasets/`:
-
-| File | Description |
-|------|-------------|
-| `visdrone_merged.yaml` | Merged mode config — all vehicles as class 0 |
-| `visdrone_separate.yaml` | Separate mode config — per-vehicle-type classes |
-| `visdrone_original.yaml` | Original VisDrone class mapping |
-| `visdrone_yolo.yaml` | YOLO-format dataset paths |
-| `datasets.yaml` | Master dataset metadata file |
-
-Configs use `${DATASET_DIR}` variable substitution for dataset paths.
-
----
-
-## UAVDT — NOT Implemented
-
-`src/aeronetra/datasets/uavdt.py` is a **stub that raises `NotImplementedError`**. Do not fabricate UAVDT support or claim it works. UAVDT annotations use a different format than VisDrone and would need a dedicated parser.
-
----
-
-## Kaggle Setup (for downloading VisDrone)
-
-1. Install Kaggle CLI: `pip install kaggle`
-2. Obtain `kaggle.json` from your Kaggle account settings.
-3. Place `kaggle.json` in `~/.kaggle/` (Linux/Mac) or `C:\Users\<username>\.kaggle\` (Windows).
-4. On Linux/Mac: `chmod 600 ~/.kaggle/kaggle.json`
-5. Download using the script (**requires explicit `--download` flag**):
-   ```bash
-   python scripts/download_dataset.py --download
-   ```
-
----
-
-## Dataset Validation
-
-Before training, validate your converted dataset with:
+## Validate before training
 
 ```bash
 python scripts/validate_dataset.py --dataset-dir <path> --num-classes <n>
 ```
 
-The validator checks for:
-- Missing image-label pairs
-- Unreadable images
-- Malformed label rows
-- Zero-area or negative-dimension bounding boxes
-- Out-of-bounds coordinates
-- Invalid class IDs
-- Duplicate annotation rows
-- Tiny boxes (few pixels)
-- Extreme aspect ratios
+The validator checks image/label pairing, malformed labels, zero-area boxes, invalid IDs, duplicate rows, boundary errors, tiny boxes and extreme aspect ratios.
 
-Returns a JSON report with class distribution and issue counts.
+## Why aerial data is difficult
 
----
+A vehicle that occupies hundreds of pixels in a street-level photograph may occupy only a few pixels in drone imagery. Dense traffic also creates overlapping boxes and occlusion. This makes annotation quality, input resolution and threshold selection especially important.
 
-## Common Annotation Problems
-
-| Problem | Description |
-|---------|-------------|
-| Out-of-bounds boxes | Coordinates exceed image dimensions — clipped during conversion |
-| Zero-area boxes | Width or height is zero — filtered out during conversion |
-| Ignored regions (class 0, 11) | Not vehicle targets — skipped by the converter |
-| Tiny objects | VisDrone vehicles can be extremely small (few pixels) — hard to detect |
-
----
-
-## Adding Another Dataset
-
-1. Inspect the dataset format and write a dedicated converter in `src/aeronetra/datasets/`.
-2. Add a new configuration file in `configs/datasets/`.
-3. Document the expected folder layout and class mappings in this file.
-4. Update `configs/datasets/datasets.yaml` to include the new dataset's metadata.
-5. Add tests in `tests/` for the new converter.
-
----
-
-## Handling Rules
-
-- ❌ Do not commit datasets to version control.
-- ❌ Never automatically download large datasets in scripts or notebooks.
-- ❌ Never modify files in `data/raw/` — write conversions to `data/processed/`.
-- ✅ Configure dataset paths via `DATASET_DIR` environment variable.
-- ✅ Use `aeronetra.config.get_data_dir()` to resolve paths — never hardcode.
+{% hint style="info" %}
+Dataset conversion does not solve small-object detection. It only ensures the model receives labels in a consistent, valid format.
+{% endhint %}
