@@ -1,6 +1,5 @@
 """Bounding-box coordinate conversions, clipping, filtering, NMS, and counting."""
 
-
 import cv2
 import logging
 import numpy as np
@@ -9,11 +8,17 @@ from aeronetra.detection.types import BoundingBox, Detection
 
 logger = logging.getLogger(__name__)
 
-def convert_xywh_to_xyxy(x: float, y: float, w: float, h: float) -> tuple[float, float, float, float]:
+
+def convert_xywh_to_xyxy(
+    x: float, y: float, w: float, h: float
+) -> tuple[float, float, float, float]:
     """Converts top-left xywh to xyxy."""
     return (x, y, x + w, y + h)
 
-def convert_yolo_to_xyxy(xc: float, yc: float, nw: float, nh: float, img_w: int, img_h: int) -> tuple[float, float, float, float]:
+
+def convert_yolo_to_xyxy(
+    xc: float, yc: float, nw: float, nh: float, img_w: int, img_h: int
+) -> tuple[float, float, float, float]:
     """Converts normalized YOLO to absolute xyxy."""
     w = nw * img_w
     h = nh * img_h
@@ -21,16 +26,20 @@ def convert_yolo_to_xyxy(xc: float, yc: float, nw: float, nh: float, img_w: int,
     y_center = yc * img_h
     return (x_center - w / 2, y_center - h / 2, x_center + w / 2, y_center + h / 2)
 
+
 def clip_box(box: BoundingBox, img_w: int, img_h: int) -> BoundingBox:
     """Clips a bounding box to image boundaries."""
     return BoundingBox(
         xmin=max(0.0, min(float(img_w), box.xmin)),
         ymin=max(0.0, min(float(img_h), box.ymin)),
         xmax=max(0.0, min(float(img_w), box.xmax)),
-        ymax=max(0.0, min(float(img_h), box.ymax))
+        ymax=max(0.0, min(float(img_h), box.ymax)),
     )
 
-def filter_by_area(detections: list[Detection], min_area: float, max_area: float | None = None) -> list[Detection]:
+
+def filter_by_area(
+    detections: list[Detection], min_area: float, max_area: float | None = None
+) -> list[Detection]:
     """Filters detections based on minimum and maximum area."""
     valid = []
     for d in detections:
@@ -39,7 +48,10 @@ def filter_by_area(detections: list[Detection], min_area: float, max_area: float
             valid.append(d)
     return valid
 
-def filter_by_aspect_ratio(detections: list[Detection], min_ratio: float, max_ratio: float) -> list[Detection]:
+
+def filter_by_aspect_ratio(
+    detections: list[Detection], min_ratio: float, max_ratio: float
+) -> list[Detection]:
     """Filters detections by aspect ratio (width/height)."""
     valid = []
     for d in detections:
@@ -50,7 +62,10 @@ def filter_by_aspect_ratio(detections: list[Detection], min_ratio: float, max_ra
                 valid.append(d)
     return valid
 
-def filter_by_roi(detections: list[Detection], roi_xyxy: tuple[float, float, float, float]) -> list[Detection]:
+
+def filter_by_roi(
+    detections: list[Detection], roi_xyxy: tuple[float, float, float, float]
+) -> list[Detection]:
     """Filters detections whose centers fall within the Region of Interest (xmin, ymin, xmax, ymax)."""
     rx1, ry1, rx2, ry2 = roi_xyxy
     valid = []
@@ -59,6 +74,7 @@ def filter_by_roi(detections: list[Detection], roi_xyxy: tuple[float, float, flo
         if rx1 <= cx <= rx2 and ry1 <= cy <= ry2:
             valid.append(d)
     return valid
+
 
 def apply_nms(detections: list[Detection], iou_threshold: float) -> list[Detection]:
     """
@@ -84,6 +100,7 @@ def apply_nms(detections: list[Detection], iou_threshold: float) -> list[Detecti
     # NMSBoxes returns a list/array of indices. In some OpenCV versions it's flat, in some nested.
     indices = np.array(indices).flatten()
     return [detections[i] for i in indices]
+
 
 def count_vehicles(detections: list[Detection]) -> tuple[int, dict]:
     """Returns total count and per-class count of detections."""
