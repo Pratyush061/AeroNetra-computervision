@@ -82,10 +82,7 @@ class OffboardControl(Node):
         if self.last_status_time is None or self.last_position_time is None:
             return True # No data received yet
 
-        if (now - self.last_status_time) > timeout or (now - self.last_position_time) > timeout:
-            return True
-
-        return False
+        return (now - self.last_status_time) > timeout or (now - self.last_position_time) > timeout
 
     def arm(self):
         """Send an arm command to the vehicle."""
@@ -149,10 +146,9 @@ class OffboardControl(Node):
         """Callback function for the timer."""
 
         # Check for stale data, except if we are just starting up and haven't received anything yet
-        if self.state != "INIT":
-            if self.is_data_stale():
-                self.get_logger().error("Vehicle data is stale or connection lost. Triggering emergency land.")
-                self.state = "EMERGENCY_LAND"
+        if self.state != "INIT" and self.is_data_stale():
+            self.get_logger().error("Vehicle data is stale or connection lost. Triggering emergency land.")
+            self.state = "EMERGENCY_LAND"
 
         # Must publish heartbeat to maintain offboard mode
         self.publish_offboard_control_heartbeat_signal()
@@ -228,7 +224,7 @@ def main(args=None) -> None:
         rclpy.logging.get_logger("Quitting").info('Done')
     except KeyboardInterrupt:
         pass
-    except Exception as e:
+    except RuntimeError as e:
         offboard_control.get_logger().error(f"Error: {e}")
     finally:
         offboard_control.destroy_node()
