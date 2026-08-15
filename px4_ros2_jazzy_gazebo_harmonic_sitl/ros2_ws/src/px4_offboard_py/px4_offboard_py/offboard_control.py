@@ -10,36 +10,54 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPo
 
 # Use absolute imports for PX4 messages (assuming px4_msgs is built in the workspace)
 try:
-    from px4_msgs.msg import OffboardControlMode, TrajectorySetpoint, VehicleCommand, VehicleLocalPosition, VehicleStatus
+    from px4_msgs.msg import (
+        OffboardControlMode,
+        TrajectorySetpoint,
+        VehicleCommand,
+        VehicleLocalPosition,
+        VehicleStatus,
+    )
 except ImportError:
     print("Error: px4_msgs not found. Make sure the package is built and sourced.")
     raise
 
+
 class OffboardControl(Node):
     def __init__(self):
-        super().__init__('offboard_control')
+        super().__init__("offboard_control")
 
         # Configure QoS profile for PX4 topics
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
-            durability=DurabilityPolicy.VOLATILE, # PX4 uXRCE-DDS agent uses VOLATILE
+            durability=DurabilityPolicy.VOLATILE,  # PX4 uXRCE-DDS agent uses VOLATILE
             history=HistoryPolicy.KEEP_LAST,
-            depth=1
+            depth=1,
         )
 
         # Publishers
         self.offboard_control_mode_publisher = self.create_publisher(
-            OffboardControlMode, '/fmu/in/offboard_control_mode', qos_profile)
+            OffboardControlMode, "/fmu/in/offboard_control_mode", qos_profile
+        )
         self.trajectory_setpoint_publisher = self.create_publisher(
-            TrajectorySetpoint, '/fmu/in/trajectory_setpoint', qos_profile)
+            TrajectorySetpoint, "/fmu/in/trajectory_setpoint", qos_profile
+        )
         self.vehicle_command_publisher = self.create_publisher(
-            VehicleCommand, '/fmu/in/vehicle_command', qos_profile)
+            VehicleCommand, "/fmu/in/vehicle_command", qos_profile
+        )
 
         # Subscribers
         self.vehicle_local_position_subscriber = self.create_subscription(
-            VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.vehicle_local_position_callback, qos_profile)
+            VehicleLocalPosition,
+            "/fmu/out/vehicle_local_position",
+            self.vehicle_local_position_callback,
+            qos_profile,
+        )
         self.vehicle_status_subscriber = self.create_subscription(
-            VehicleStatus, '/fmu/out/vehicle_status', self.vehicle_status_callback, qos_profile)
+            VehicleStatus,
+            "/fmu/out/vehicle_status",
+            self.vehicle_status_callback,
+            qos_profile,
+        )
 
         # State variables
         self.nav_state = VehicleStatus.NAVIGATION_STATE_MAX
@@ -55,7 +73,7 @@ class OffboardControl(Node):
         self.state = "INIT"
         self.offboard_setpoint_counter = 0
         self.hover_start_time = None
-        self.hover_duration = 10.0 # seconds
+        self.hover_duration = 10.0  # seconds
 
         # Create a timer to publish control commands at 10 Hz
         timer_period = 0.1  # 10 Hz
@@ -80,23 +98,31 @@ class OffboardControl(Node):
         timeout = rclpy.time.Duration(seconds=2.0)
 
         if self.last_status_time is None or self.last_position_time is None:
-            return True # No data received yet
+            return True  # No data received yet
 
-        return (now - self.last_status_time) > timeout or (now - self.last_position_time) > timeout
+        return (now - self.last_status_time) > timeout or (
+            now - self.last_position_time
+        ) > timeout
 
     def arm(self):
         """Send an arm command to the vehicle."""
-        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, param1=1.0)
-        self.get_logger().info('Arm command send')
+        self.publish_vehicle_command(
+            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, param1=1.0
+        )
+        self.get_logger().info("Arm command send")
 
     def disarm(self):
         """Send a disarm command to the vehicle."""
-        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, param1=0.0)
-        self.get_logger().info('Disarm command send')
+        self.publish_vehicle_command(
+            VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, param1=0.0
+        )
+        self.get_logger().info("Disarm command send")
 
     def engage_offboard_mode(self):
         """Switch to offboard mode."""
-        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, param1=1.0, param2=6.0)
+        self.publish_vehicle_command(
+            VehicleCommand.VEHICLE_CMD_DO_SET_MODE, param1=1.0, param2=6.0
+        )
         self.get_logger().info("Switching to offboard mode")
 
     def land(self):
@@ -147,7 +173,9 @@ class OffboardControl(Node):
 
         # Check for stale data, except if we are just starting up and haven't received anything yet
         if self.state != "INIT" and self.is_data_stale():
-            self.get_logger().error("Vehicle data is stale or connection lost. Triggering emergency land.")
+            self.get_logger().error(
+                "Vehicle data is stale or connection lost. Triggering emergency land."
+            )
             self.state = "EMERGENCY_LAND"
 
         # Must publish heartbeat to maintain offboard mode
@@ -157,12 +185,16 @@ class OffboardControl(Node):
         if self.state == "INIT":
             # Wait for data to arrive before proceeding
             if self.is_data_stale():
-                self.get_logger().debug("Waiting for vehicle data...", throttle_duration_sec=2.0)
+                self.get_logger().debug(
+                    "Waiting for vehicle data...", throttle_duration_sec=2.0
+                )
                 return
 
             # Send initial setpoints before switching mode (PX4 requires a continuous stream of setpoints for at least 0.5 - 1.0 seconds)
             if self.offboard_setpoint_counter == 0:
-                self.get_logger().info("Streaming setpoints before engaging offboard mode...")
+                self.get_logger().info(
+                    "Streaming setpoints before engaging offboard mode..."
+                )
 
             self.publish_position_setpoint(0.0, 0.0, 0.0)
             self.offboard_setpoint_counter += 1
@@ -182,11 +214,15 @@ class OffboardControl(Node):
             if self.vehicle_altitude <= (self.takeoff_height + 0.2):
                 self.state = "HOVER"
                 self.hover_start_time = self.get_clock().now()
-                self.get_logger().info(f"Target altitude reached. Transitioning to HOVER for {self.hover_duration} seconds")
+                self.get_logger().info(
+                    f"Target altitude reached. Transitioning to HOVER for {self.hover_duration} seconds"
+                )
 
         elif self.state == "HOVER":
             self.publish_position_setpoint(0.0, 0.0, self.takeoff_height)
-            elapsed_time = (self.get_clock().now() - self.hover_start_time).nanoseconds / 1e9
+            elapsed_time = (
+                self.get_clock().now() - self.hover_start_time
+            ).nanoseconds / 1e9
             if elapsed_time >= self.hover_duration:
                 self.state = "LAND"
                 self.get_logger().info("Hover complete. Transitioning to LAND")
@@ -204,24 +240,29 @@ class OffboardControl(Node):
 
         elif self.state == "EMERGENCY_LAND":
             self.land()
-            self.publish_position_setpoint(0.0, 0.0, self.vehicle_altitude) # command current altitude
+            self.publish_position_setpoint(
+                0.0, 0.0, self.vehicle_altitude
+            )  # command current altitude
 
             if self.arming_state == VehicleStatus.ARMING_STATE_DISARMED:
-                self.get_logger().info("Vehicle disarmed after emergency land. Quitting.")
+                self.get_logger().info(
+                    "Vehicle disarmed after emergency land. Quitting."
+                )
                 raise SystemExit
 
         else:
             self.get_logger().warn("Unknown state.")
 
+
 def main(args=None) -> None:
-    print('Starting offboard control node...')
+    print("Starting offboard control node...")
     rclpy.init(args=args)
     offboard_control = OffboardControl()
 
     try:
         rclpy.spin(offboard_control)
     except SystemExit:
-        rclpy.logging.get_logger("Quitting").info('Done')
+        rclpy.logging.get_logger("Quitting").info("Done")
     except KeyboardInterrupt:
         pass
     except RuntimeError as e:
@@ -230,5 +271,6 @@ def main(args=None) -> None:
         offboard_control.destroy_node()
         rclpy.shutdown()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

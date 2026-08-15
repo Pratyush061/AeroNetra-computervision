@@ -41,6 +41,7 @@ def test_load_yaml():
 
 def test_load_yaml_missing():
     import pytest
+
     with pytest.raises(FileNotFoundError):
         config.load_yaml(Path("/nonexistent/config.yaml"))
 

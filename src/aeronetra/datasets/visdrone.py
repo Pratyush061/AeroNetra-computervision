@@ -23,30 +23,32 @@ VISDRONE_VEHICLE_CLASSES = {
     7: "tricycle",
     8: "awning-tricycle",
     9: "bus",
-    10: "motor"
+    10: "motor",
 }
+
 
 def parse_visdrone_row(row_str: str) -> dict[str, int | None]:
     """
     Parses a single row from a VisDrone annotation file.
     Format: <bbox_left>,<bbox_top>,<bbox_width>,<bbox_height>,<score>,<object_category>,<truncation>,<occlusion>
     """
-    parts = row_str.strip().split(',')
+    parts = row_str.strip().split(",")
     if len(parts) < 8:
         return None
     try:
         return {
-            'left': int(parts[0]),
-            'top': int(parts[1]),
-            'width': int(parts[2]),
-            'height': int(parts[3]),
-            'score': int(parts[4]),
-            'category': int(parts[5]),
-            'truncation': int(parts[6]),
-            'occlusion': int(parts[7])
+            "left": int(parts[0]),
+            "top": int(parts[1]),
+            "width": int(parts[2]),
+            "height": int(parts[3]),
+            "score": int(parts[4]),
+            "category": int(parts[5]),
+            "truncation": int(parts[6]),
+            "occlusion": int(parts[7]),
         }
     except ValueError:
         return None
+
 
 def map_category(category: int, mode: str = "separate") -> int | None:
     """Maps a VisDrone category to a YOLO class ID.
@@ -73,15 +75,18 @@ def map_category(category: int, mode: str = "separate") -> int | None:
 
     return None
 
-def convert_to_yolo_format(box: dict[str, int], img_width: int, img_height: int) -> tuple[float, float, float, float | None]:
+
+def convert_to_yolo_format(
+    box: dict[str, int], img_width: int, img_height: int
+) -> tuple[float, float, float, float | None]:
     """
     Converts VisDrone box to normalized YOLO format (x_center, y_center, width, height).
     Clips to image boundaries and rejects invalid boxes.
     """
-    left = max(0, box['left'])
-    top = max(0, box['top'])
-    right = min(img_width, box['left'] + box['width'])
-    bottom = min(img_height, box['top'] + box['height'])
+    left = max(0, box["left"])
+    top = max(0, box["top"])
+    right = min(img_width, box["left"] + box["width"])
+    bottom = min(img_height, box["top"] + box["height"])
 
     w = right - left
     h = bottom - top
@@ -103,7 +108,13 @@ def convert_to_yolo_format(box: dict[str, int], img_width: int, img_height: int)
     return (x_center, y_center, norm_w, norm_h)
 
 
-def convert_dataset(images_dir: Path, labels_dir: Path, output_dir: Path, mode: str = "separate", dry_run: bool = False) -> dict[str, int]:
+def convert_dataset(
+    images_dir: Path,
+    labels_dir: Path,
+    output_dir: Path,
+    mode: str = "separate",
+    dry_run: bool = False,
+) -> dict[str, int]:
     """
     Converts a directory of VisDrone images and labels to YOLO format.
 
@@ -121,12 +132,12 @@ def convert_dataset(images_dir: Path, labels_dir: Path, output_dir: Path, mode: 
         Dictionary of conversion statistics.
     """
     stats = {
-        'total_images': 0,
-        'missing_labels': 0,
-        'valid_annotations': 0,
-        'ignored_annotations': 0,
-        'malformed_annotations': 0,
-        'skipped_zero_area': 0
+        "total_images": 0,
+        "missing_labels": 0,
+        "valid_annotations": 0,
+        "ignored_annotations": 0,
+        "malformed_annotations": 0,
+        "skipped_zero_area": 0,
     }
 
     if not images_dir.exists():
@@ -141,7 +152,7 @@ def convert_dataset(images_dir: Path, labels_dir: Path, output_dir: Path, mode: 
 
     # Deterministic sorting
     image_paths = sorted(images_dir.glob("*.jpg"))
-    stats['total_images'] = len(image_paths)
+    stats["total_images"] = len(image_paths)
 
     for img_path in image_paths:
         label_path = labels_dir / f"{img_path.stem}.txt"
@@ -149,7 +160,7 @@ def convert_dataset(images_dir: Path, labels_dir: Path, output_dir: Path, mode: 
         out_img_path = out_images_dir / img_path.name
 
         if not label_path.exists():
-            stats['missing_labels'] += 1
+            stats["missing_labels"] += 1
             continue
 
         try:
@@ -157,37 +168,37 @@ def convert_dataset(images_dir: Path, labels_dir: Path, output_dir: Path, mode: 
             # In a dry_run, we still read it to calculate stats properly.
             img = cv2.imread(str(img_path))
             if img is None:
-                stats['malformed_annotations'] += 1
+                stats["malformed_annotations"] += 1
                 continue
             img_h, img_w = img.shape[:2]
         except (ValueError, IndexError, OSError, cv2.error):
-            stats['malformed_annotations'] += 1
+            stats["malformed_annotations"] += 1
             continue
 
         yolo_lines = []
-        with open(label_path, 'r', encoding='utf-8') as f:
+        with open(label_path, "r", encoding="utf-8") as f:
             for line in f:
                 parsed = parse_visdrone_row(line)
                 if not parsed:
-                    stats['malformed_annotations'] += 1
+                    stats["malformed_annotations"] += 1
                     continue
 
-                cat_id = map_category(parsed['category'], mode)
+                cat_id = map_category(parsed["category"], mode)
                 if cat_id is None:
-                    stats['ignored_annotations'] += 1
+                    stats["ignored_annotations"] += 1
                     continue
 
                 yolo_box = convert_to_yolo_format(parsed, img_w, img_h)
                 if not yolo_box:
-                    stats['skipped_zero_area'] += 1
+                    stats["skipped_zero_area"] += 1
                     continue
 
-                stats['valid_annotations'] += 1
+                stats["valid_annotations"] += 1
                 xc, yc, w, h = yolo_box
                 yolo_lines.append(f"{cat_id} {xc:.6f} {yc:.6f} {w:.6f} {h:.6f}\n")
 
         if not dry_run:
-            with open(out_label_path, 'w', encoding='utf-8') as f:
+            with open(out_label_path, "w", encoding="utf-8") as f:
                 f.writelines(yolo_lines)
 
             # Symlink or copy image. Symlink is faster and saves space, but copying is safer.
@@ -197,6 +208,7 @@ def convert_dataset(images_dir: Path, labels_dir: Path, output_dir: Path, mode: 
                     os.symlink(img_path.resolve(), out_img_path)
                 except OSError:
                     import shutil
+
                     shutil.copy2(img_path, out_img_path)
 
     return stats

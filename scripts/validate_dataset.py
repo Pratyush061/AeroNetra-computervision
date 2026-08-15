@@ -3,10 +3,12 @@
 Dataset Validation CLI.
 Validates YOLO format dataset for errors.
 """
+
 import argparse
 import json
 from pathlib import Path
 import cv2
+
 
 def validate_dataset(
     dataset_name: str,
@@ -26,7 +28,7 @@ def validate_dataset(
         "duplicate_rows": 0,
         "suspiciously_tiny_boxes": 0,
         "extreme_aspect_ratios": 0,
-        "class_counts": {}
+        "class_counts": {},
     }
 
     if not images_dir.exists():
@@ -53,7 +55,7 @@ def validate_dataset(
         seen_rows = set()
 
         try:
-            with open(label_path, 'r', encoding='utf-8') as f:
+            with open(label_path, "r", encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -86,7 +88,7 @@ def validate_dataset(
                         continue
 
                     # Normalized bounds check
-                    if x - w/2 < 0 or y - h/2 < 0 or x + w/2 > 1 or y + h/2 > 1:
+                    if x - w / 2 < 0 or y - h / 2 < 0 or x + w / 2 > 1 or y + h / 2 > 1:
                         report["out_of_bounds_boxes"] += 1
 
                     if w * img_w < 5 or h * img_h < 5:
@@ -114,18 +116,24 @@ def validate_dataset(
 
     return report
 
+
 def main():
     parser = argparse.ArgumentParser(description="Validate YOLO format dataset.")
     parser.add_argument("--dataset", required=True, help="Name of the dataset")
     parser.add_argument("--images", required=True, help="Path to images directory")
     parser.add_argument("--labels", required=True, help="Path to labels directory")
     parser.add_argument(
-        "--num-classes", type=int, default=None,
+        "--num-classes",
+        type=int,
+        default=None,
         help="Expected number of classes (validates class IDs are in [0, N))",
     )
     args = parser.parse_args()
 
-    validate_dataset(args.dataset, Path(args.images), Path(args.labels), args.num_classes)
+    validate_dataset(
+        args.dataset, Path(args.images), Path(args.labels), args.num_classes
+    )
+
 
 if __name__ == "__main__":
     main()

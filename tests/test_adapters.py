@@ -2,16 +2,20 @@ import numpy as np
 
 from aeronetra.detection.adapters import get_model_adapter
 
+
 class MockResultBox:
     def __init__(self):
         import torch
+
         self.xyxy = torch.tensor([[10.0, 10.0, 50.0, 50.0]])
         self.conf = torch.tensor([0.9])
         self.cls = torch.tensor([2])
 
+
 class MockResult:
     def __init__(self):
         self.boxes = MockResultBox()
+
 
 class MockYOLOModel:
     def __init__(self):
@@ -22,6 +26,7 @@ class MockYOLOModel:
 
     def predict(self, source, conf, iou, device, verbose):
         return [MockResult()]
+
 
 def test_adapter_normalization(monkeypatch):
     from aeronetra.detection.adapters import UltralyticsAdapter
@@ -43,5 +48,6 @@ def test_adapter_normalization(monkeypatch):
     assert det.class_name == "car"
     assert det.class_id == 2
     import math
+
     assert math.isclose(det.confidence, 0.9, rel_tol=1e-5)
     assert det.box.xmin == 10.0

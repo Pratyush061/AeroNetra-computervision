@@ -11,9 +11,13 @@ The coordinate format and the meaning of occlusion/truncation flags also vary.
 Until the exact raw format is rigorously inspected and verified, this module
 provides a stub interface. Do NOT fabricate a working converter.
 """
+
 from pathlib import Path
 
-def convert_uavdt_dataset(images_dir: Path, labels_dir: Path, output_dir: Path, dry_run: bool = False) -> dict[str, int]:
+
+def convert_uavdt_dataset(
+    images_dir: Path, labels_dir: Path, output_dir: Path, dry_run: bool = False
+) -> dict[str, int]:
     """
     Interface for converting UAVDT dataset to YOLO format.
 

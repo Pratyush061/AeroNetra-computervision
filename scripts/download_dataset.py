@@ -28,7 +28,9 @@ def check_kaggle_cli():
     return True
 
 
-def download_kaggle_dataset(dataset_name: str, dest_dir: Path, dry_run: bool = False, force: bool = False):
+def download_kaggle_dataset(
+    dataset_name: str, dest_dir: Path, dry_run: bool = False, force: bool = False
+):
     """Downloads a dataset from Kaggle."""
     if not check_kaggle_cli():
         sys.exit(1)
@@ -39,9 +41,20 @@ def download_kaggle_dataset(dataset_name: str, dest_dir: Path, dry_run: bool = F
             print("Use --force to overwrite.", file=sys.stderr)
             sys.exit(1)
         else:
-            print(f"Warning: --force used. Existing data in {dest_dir} may be overwritten.")
+            print(
+                f"Warning: --force used. Existing data in {dest_dir} may be overwritten."
+            )
 
-    cmd = ["kaggle", "datasets", "download", "-d", dataset_name, "-p", str(dest_dir), "--unzip"]
+    cmd = [
+        "kaggle",
+        "datasets",
+        "download",
+        "-d",
+        dataset_name,
+        "-p",
+        str(dest_dir),
+        "--unzip",
+    ]
 
     if dry_run:
         print(f"[DRY-RUN] Would run: {' '.join(cmd)}")
@@ -55,23 +68,44 @@ def download_kaggle_dataset(dataset_name: str, dest_dir: Path, dry_run: bool = F
             print(f"Error downloading dataset: {e}", file=sys.stderr)
             sys.exit(1)
 
+
 def main():
     parser = argparse.ArgumentParser(description="Download datasets for AeroNetra.")
-    parser.add_argument("--dataset", required=True, help="Name of the dataset (e.g., 'mukuldeshantri/visdrone2019')")
+    parser.add_argument(
+        "--dataset",
+        required=True,
+        help="Name of the dataset (e.g., 'mukuldeshantri/visdrone2019')",
+    )
     parser.add_argument("--dest", required=True, help="Destination directory")
-    parser.add_argument("--download", action="store_true", help="Explicitly allow downloading")
-    parser.add_argument("--force", action="store_true", help="Force overwrite of existing data")
-    parser.add_argument("--dry-run", action="store_true", help="Print what would happen without doing it")
+    parser.add_argument(
+        "--download", action="store_true", help="Explicitly allow downloading"
+    )
+    parser.add_argument(
+        "--force", action="store_true", help="Force overwrite of existing data"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print what would happen without doing it",
+    )
 
     args = parser.parse_args()
 
     if not args.download and not args.dry_run:
-        print("Error: You must explicitly provide the --download flag to download multi-gigabyte datasets.", file=sys.stderr)
-        print("Example: python scripts/download_dataset.py --dataset ... --dest ... --download", file=sys.stderr)
+        print(
+            "Error: You must explicitly provide the --download flag to download multi-gigabyte datasets.",
+            file=sys.stderr,
+        )
+        print(
+            "Example: python scripts/download_dataset.py --dataset ... --dest ... --download",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     dest_path = Path(args.dest)
-    download_kaggle_dataset(args.dataset, dest_path, dry_run=args.dry_run, force=args.force)
+    download_kaggle_dataset(
+        args.dataset, dest_path, dry_run=args.dry_run, force=args.force
+    )
 
 
 if __name__ == "__main__":
