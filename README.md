@@ -1,13 +1,13 @@
 ---
 description: >-
-  AeroNetra is a reproducible computer-vision research platform for UAV-based
-  vehicle detection, counting, model comparison, and simulation-oriented
-  experimentation.
+  AeroNetra is a reproducible research platform dedicated to advancing UAV-based
+  computer vision, optimized for edge-computing environments.
+icon: drone-front
 ---
 
 # AeroNetra Computer Vision
 
-AeroNetra is a research-focused computer-vision project for **detecting and counting vehicles in aerial and UAV imagery**. The project separates reusable Python code, dataset tooling, model adapters, experiments, notebooks, and simulation work so that results remain understandable and reproducible.
+Currently The project focuses on counting the cars using the drone camera and separates reusable Python code, dataset tooling, model adapters, experiments, notebooks, and simulation work so that results remain understandable and reproducible.The project currently focuses on vehicle counting via drone imagery. It employs a modular architecture—cleanly separating reusable Python code, dataset tooling, model adapters, and simulation environments—to ensure all experimental results remain transparent and fully reproducible
 
 {% hint style="info" %}
 **Current scope:** static-image vehicle detection and image-level counting. Video tracking, unique cross-frame counting, geospatial analytics, and edge deployment are later phases.
@@ -62,6 +62,13 @@ flowchart TD
     J --> K[Record metadata & compare models]
 ```
 
+### Prerequisites
+
+* Python 3.10 or higher (developed on 3.12)
+* OS: Linux, macOS, or Windows
+* GPU (optional): A CUDA-capable GPU is required for training on Kaggle. Inference on CPU works but is slower; a GPU is recommended for batch inference.
+* Disk space: \~3 GB for the VisDrone dataset and model weights
+
 ## Quick start
 
 ```bash
@@ -78,6 +85,23 @@ Configure dataset paths:
 
 ```bash
 cp .env.example .env
+```
+
+Edit `.env` to set the following variables:
+
+| Variable       | Description                                 | Example                    |
+| -------------- | ------------------------------------------- | -------------------------- |
+| `DATA_DIR`     | Root directory for raw datasets             | `/data/aeronetra`          |
+| `VISDRONE_DIR` | Path to VisDrone dataset                    | `${DATA_DIR}/VisDrone2019` |
+| `WEIGHTS_DIR`  | Directory for trained model weights         | `${DATA_DIR}/weights`      |
+| `OUTPUTS_DIR`  | Directory for inference outputs and exports | `./outputs`                |
+
+See [docs/ENVIRONMENT\_SETUP.md](docs/ENVIRONMENT_SETUP.md) for full setup details.
+
+#### 3. Download a dataset
+
+```python
+python scripts/download_visdrone.py --output-dir data/VisDrone2019
 ```
 
 Then verify the package:
