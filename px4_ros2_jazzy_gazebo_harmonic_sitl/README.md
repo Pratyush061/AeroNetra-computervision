@@ -19,11 +19,10 @@ flowchart LR
     PX4[PX4 SITL] -->|uXRCE-DDS| XRCE[Micro XRCE-DDS Agent]
     XRCE --> FMU[ROS 2 /fmu topics]
     FMU --> CTRL[Offboard control node]
-
     GZ[Gazebo IMX214 camera] -->|gz.msgs.Image| BRIDGE[ros_gz_image image_bridge]
     BRIDGE --> IMG[ROS 2 Image topic]
     IMG --> YOLO[YOLO detector]
-    YOLO --> ANN[/vision/annotated]
+    YOLO --> ANN["/vision/annotated"]
     ANN --> RQT[rqt_image_view]
 ```
 
