@@ -5,10 +5,10 @@ Prioritizes explicit configurations and prevents automatic large downloads.
 """
 
 import argparse
-from pathlib import Path
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 
 def check_kaggle_cli():
