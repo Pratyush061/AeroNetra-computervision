@@ -1,11 +1,12 @@
 datasets:
   - name: VisDrone
     source: "https://github.com/VisDrone/VisDrone-Dataset"
-    kaggle_source: "https://www.kaggle.com/datasets/mukuldeshantri/visdrone2019" # Verify license and contents
+    kaggle_source: "https://www.kaggle.com/datasets/banuprasadb/visdrone-dataset" # Verify license and contents
     task: "Detection"
     viewpoint: "Aerial"
     expected_format: "VisDrone original (TXT)"
     vehicle_classes:
+      - 2 # bicycle
       - 3 # car
       - 4 # van
       - 5 # truck
