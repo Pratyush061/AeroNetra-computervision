@@ -1,10 +1,18 @@
 from pathlib import Path
 
+import matplotlib
+import pytest
+
 from aeronetra.visualization.plots import (
     plot_class_distribution,
     plot_objects_per_image,
     plot_size_distribution,
 )
+
+
+@pytest.fixture(autouse=True)
+def _setup_matplotlib_backend():
+    matplotlib.use("Agg")
 
 
 def test_plot_class_distribution(tmp_path: Path):
