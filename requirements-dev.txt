@@ -1,3 +1,6 @@
 pytest
 pytest-cov
 ruff==0.16.9
+numpy
+opencv-python-headless
+PyYAML

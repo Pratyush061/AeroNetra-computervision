@@ -3,12 +3,25 @@ import numpy as np
 from aeronetra.detection.adapters import get_model_adapter
 
 
+class _TensorLike:
+    """Minimal stand-in for a torch tensor exposing the `.cpu().numpy()` API
+    the adapter relies on, so this test needs no deep-learning dependency."""
+
+    def __init__(self, array):
+        self._array = np.asarray(array)
+
+    def cpu(self):
+        return self
+
+    def numpy(self):
+        return self._array
+
+
 class MockResultBox:
     def __init__(self):
-        import torch
-        self.xyxy = torch.tensor([[10.0, 10.0, 50.0, 50.0]])
-        self.conf = torch.tensor([0.9])
-        self.cls = torch.tensor([2])
+        self.xyxy = _TensorLike([[10.0, 10.0, 50.0, 50.0]])
+        self.conf = _TensorLike([0.9])
+        self.cls = _TensorLike([2])
 
 class MockResult:
     def __init__(self):
