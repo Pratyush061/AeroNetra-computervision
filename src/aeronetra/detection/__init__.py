@@ -1,5 +1,6 @@
 """Object detection adapters and data types."""
 
+from aeronetra.detection.adapters import BaseDetector, get_model_adapter
 from aeronetra.detection.types import (
     BoundingBox,
     CountSummary,
@@ -7,7 +8,6 @@ from aeronetra.detection.types import (
     InferenceMetadata,
     ModelPrediction,
 )
-from aeronetra.detection.adapters import BaseDetector, get_model_adapter
 
 __all__ = [
     "BaseDetector",

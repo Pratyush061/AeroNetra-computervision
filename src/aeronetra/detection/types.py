@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 
+
 @dataclass
 class BoundingBox:
     """Represents a bounding box in xyxy format (xmin, ymin, xmax, ymax)."""

@@ -2,6 +2,7 @@ import numpy as np
 
 from aeronetra.detection.adapters import get_model_adapter
 
+
 class MockResultBox:
     def __init__(self):
         import torch

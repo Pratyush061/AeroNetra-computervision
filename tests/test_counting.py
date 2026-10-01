@@ -1,15 +1,16 @@
 import numpy as np
 
-from aeronetra.detection.types import BoundingBox, Detection
+from aeronetra.counting.drawing import draw_detections, draw_roi
 from aeronetra.counting.ops import (
+    apply_nms,
+    clip_box,
     convert_xywh_to_xyxy,
     convert_yolo_to_xyxy,
-    clip_box,
     filter_by_area,
     filter_by_roi,
-    apply_nms,
 )
-from aeronetra.counting.drawing import draw_detections, draw_roi
+from aeronetra.detection.types import BoundingBox, Detection
+
 
 def test_convert_xywh_to_xyxy():
     assert convert_xywh_to_xyxy(10, 20, 30, 40) == (10, 20, 40, 60)
@@ -98,9 +99,10 @@ def test_filtering_logic():
     assert filtered.detections[0].class_name == "car"
 
 def test_export_utilities(tmp_path):
-    from aeronetra.counting.drawing import export_to_json, export_to_csv
-    import json
     import csv
+    import json
+
+    from aeronetra.counting.drawing import export_to_csv, export_to_json
 
     b1 = BoundingBox(10, 10, 50, 50)
     d1 = Detection(b1, 0, "car", 0.9)

@@ -6,11 +6,17 @@ Commands takeoff to 2 meters, hovers for 10 seconds, then lands.
 
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
 
 # Use absolute imports for PX4 messages (assuming px4_msgs is built in the workspace)
 try:
-    from px4_msgs.msg import OffboardControlMode, TrajectorySetpoint, VehicleCommand, VehicleLocalPosition, VehicleStatus
+    from px4_msgs.msg import (
+        OffboardControlMode,
+        TrajectorySetpoint,
+        VehicleCommand,
+        VehicleLocalPosition,
+        VehicleStatus,
+    )
 except ImportError:
     print("Error: px4_msgs not found. Make sure the package is built and sourced.")
     raise
@@ -82,10 +88,10 @@ class OffboardControl(Node):
         if self.last_status_time is None or self.last_position_time is None:
             return True # No data received yet
 
-        if (now - self.last_status_time) > timeout or (now - self.last_position_time) > timeout:
-            return True
-
-        return False
+        return (
+            (now - self.last_status_time) > timeout
+            or (now - self.last_position_time) > timeout
+        )
 
     def arm(self):
         """Send an arm command to the vehicle."""
@@ -149,10 +155,9 @@ class OffboardControl(Node):
         """Callback function for the timer."""
 
         # Check for stale data, except if we are just starting up and haven't received anything yet
-        if self.state != "INIT":
-            if self.is_data_stale():
-                self.get_logger().error("Vehicle data is stale or connection lost. Triggering emergency land.")
-                self.state = "EMERGENCY_LAND"
+        if self.state != "INIT" and self.is_data_stale():
+            self.get_logger().error("Vehicle data is stale or connection lost. Triggering emergency land.")
+            self.state = "EMERGENCY_LAND"
 
         # Must publish heartbeat to maintain offboard mode
         self.publish_offboard_control_heartbeat_signal()
@@ -228,7 +233,7 @@ def main(args=None) -> None:
         rclpy.logging.get_logger("Quitting").info('Done')
     except KeyboardInterrupt:
         pass
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - top-level handler: log any failure and shut down cleanly
         offboard_control.get_logger().error(f"Error: {e}")
     finally:
         offboard_control.destroy_node()

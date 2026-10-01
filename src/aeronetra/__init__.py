@@ -2,6 +2,7 @@
 
 __version__ = "0.1.0"
 
+from aeronetra.detection.adapters import get_model_adapter
 from aeronetra.detection.types import (
     BoundingBox,
     CountSummary,
@@ -9,7 +10,6 @@ from aeronetra.detection.types import (
     InferenceMetadata,
     ModelPrediction,
 )
-from aeronetra.detection.adapters import get_model_adapter
 
 __all__ = [
     "BoundingBox",

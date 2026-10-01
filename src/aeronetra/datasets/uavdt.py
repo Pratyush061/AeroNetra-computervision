@@ -13,6 +13,7 @@ provides a stub interface. Do NOT fabricate a working converter.
 """
 from pathlib import Path
 
+
 def convert_uavdt_dataset(images_dir: Path, labels_dir: Path, output_dir: Path, dry_run: bool = False) -> dict[str, int]:
     """
     Interface for converting UAVDT dataset to YOLO format.

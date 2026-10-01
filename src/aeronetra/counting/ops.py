@@ -1,8 +1,9 @@
 """Bounding-box coordinate conversions, clipping, filtering, NMS, and counting."""
 
 
-import cv2
 import logging
+
+import cv2
 import numpy as np
 
 from aeronetra.detection.types import BoundingBox, Detection

@@ -1,13 +1,14 @@
 """Drawing utilities for detections, ROI overlays, and result export."""
 
+import csv
+import json
 from pathlib import Path
 
-import csv
 import cv2
-import json
 import numpy as np
 
 from aeronetra.detection.types import CountSummary, Detection
+
 
 def draw_detections(image: np.ndarray, detections: list[Detection], color: tuple[int, int, int] = (0, 255, 0), thickness: int = 2) -> np.ndarray:
     """Draws bounding boxes and labels on an image."""

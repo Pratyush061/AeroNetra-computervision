@@ -1,9 +1,8 @@
 """Model adapter interfaces for consistent object detection behavior."""
 
-from abc import ABC, abstractmethod
-
 import logging
 import time
+from abc import ABC, abstractmethod
 
 import numpy as np
 
@@ -25,12 +24,10 @@ class BaseDetector(ABC):
     @abstractmethod
     def load_model(self):
         """Loads the model into memory. Must be called explicitly."""
-        pass
 
     @abstractmethod
     def predict(self, image: np.ndarray, conf_thresh: float = 0.25, iou_thresh: float = 0.45) -> ModelPrediction:
         """Runs inference on a single image and returns standardized detections."""
-        pass
 
 class UltralyticsAdapter(BaseDetector):
     """
@@ -43,7 +40,7 @@ class UltralyticsAdapter(BaseDetector):
 
     def load_model(self):
         try:
-            from ultralytics import YOLO, RTDETR
+            from ultralytics import RTDETR, YOLO
         except ImportError:
             raise ImportError(
                 "Please install ultralytics: pip install ultralytics"
