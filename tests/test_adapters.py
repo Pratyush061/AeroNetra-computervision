@@ -1,6 +1,9 @@
-import numpy as np
+import math
 
-from aeronetra.detection.adapters import get_model_adapter
+import numpy as np
+import pytest
+
+from aeronetra.detection.adapters import UltralyticsAdapter, get_model_adapter
 
 
 class _TensorLike:
@@ -23,39 +26,57 @@ class MockResultBox:
         self.conf = _TensorLike([0.9])
         self.cls = _TensorLike([2])
 
+
 class MockResult:
     def __init__(self):
         self.boxes = MockResultBox()
+
 
 class MockYOLOModel:
     def __init__(self):
         self.device = "cpu"
 
     def to(self, device):
-        self.device = device
+        pass
 
     def predict(self, source, conf, iou, device, verbose):
         return [MockResult()]
 
-def test_adapter_normalization(monkeypatch):
-    from aeronetra.detection.adapters import UltralyticsAdapter
 
-    # Mock the loading logic
+def test_adapter_normalization(monkeypatch):
     def mock_load(self):
         self.model = MockYOLOModel()
 
     monkeypatch.setattr(UltralyticsAdapter, "load_model", mock_load)
 
-    adapter = get_model_adapter("YOLO11", "dummy.pt", {2: "car"})
+    class_names = {0: "person", 2: "car"}
+    adapter = get_model_adapter("YOLOv8", "yolov8n.pt", class_names)
     adapter.load_model()
 
-    dummy_img = np.zeros((100, 100, 3), dtype=np.uint8)
-    pred = adapter.predict(dummy_img, conf_thresh=0.25)
+    dummy_image = np.zeros((100, 100, 3), dtype=np.uint8)
+    prediction = adapter.predict(dummy_image)
 
-    assert len(pred.detections) == 1
-    det = pred.detections[0]
+    assert len(prediction.detections) == 1
+    det = prediction.detections[0]
     assert det.class_name == "car"
     assert det.class_id == 2
-    import math
     assert math.isclose(det.confidence, 0.9, rel_tol=1e-5)
     assert det.box.xmin == 10.0
+
+
+def test_adapter_unsupported_model():
+    with pytest.raises(ValueError, match="No adapter available for model"):
+        get_model_adapter("FasterRCNN", "weights.pt", {0: "vehicle"})
+
+
+def test_adapter_rtdetr_pattern():
+    adapter = get_model_adapter("RT-DETR", "rtdetr-l.pt", {0: "vehicle"})
+    assert isinstance(adapter, UltralyticsAdapter)
+    assert adapter.model_type == "RT-DETR"
+
+
+def test_adapter_predict_without_load():
+    adapter = get_model_adapter("YOLOv8", "yolov8n.pt", {0: "vehicle"})
+    dummy_image = np.zeros((10, 10, 3), dtype=np.uint8)
+    with pytest.raises(RuntimeError, match="Model is not loaded"):
+        adapter.predict(dummy_image)
