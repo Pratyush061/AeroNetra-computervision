@@ -1,139 +1,393 @@
 ---
 description: >-
-  AeroNetra is a reproducible research platform dedicated to advancing UAV-based
-  computer vision, optimized for edge-computing environments.
+  A modular computer-vision research platform for UAV imagery, vehicle detection,
+  image-level counting, model comparison, and reproducible experiments.
 icon: drone-front
 ---
 
 # AeroNetra Computer Vision
 
-Currently The project focuses on counting the cars using the drone camera and separates reusable Python code, dataset tooling, model adapters, experiments, notebooks, and simulation work so that results remain understandable and reproducible.The project currently focuses on vehicle counting via drone imagery. It employs a modular architecture—cleanly separating reusable Python code, dataset tooling, model adapters, and simulation environments—to ensure all experimental results remain transparent and fully reproducible
+AeroNetra is a modular computer-vision research platform for detecting and counting vehicles in aerial and UAV imagery.
+
+The project is designed around one principle:
+
+> **Change the detector without rewriting the rest of the perception pipeline.**
+
+Model-specific behavior is isolated behind adapters, while datasets, filtering, counting, visualization, and experiment code operate on standardized outputs.
 
 {% hint style="info" %}
-**Current scope:** static-image vehicle detection and image-level counting. Video tracking, unique cross-frame counting, geospatial analytics, and edge deployment are later phases.
+**Current scope:** static-image vehicle detection and image-level counting. Video tracking, persistent vehicle identities, geospatial analytics, and edge/UAV deployment are planned research phases rather than completed core functionality.
 {% endhint %}
 
-## System at a glance
+## Why AeroNetra?
 
-```mermaid
+Aerial vehicle detection is different from ordinary street-level object detection. Objects are often small, densely packed, partially occluded, and viewed from unusual angles.
+
+AeroNetra separates the research problem into explicit layers:
+
+| Layer | Responsibility |
+| --- | --- |
+| Dataset | Acquire, validate, convert, and organize training data |
+| Detection | Run different model families through one adapter interface |
+| Post-processing | Confidence, class, geometry, ROI, and architecture-aware filtering |
+| Counting | Produce image-level total and per-class vehicle counts |
+| Visualization | Inspect predictions and export analysis artifacts |
+| Experiments | Keep configurations, evaluation conditions, and comparisons explicit |
+
+This structure makes it easier to reproduce an experiment, swap a model, diagnose a failure, or extend the system without mixing unrelated responsibilities.
+
+## What is implemented?
+
+### Detection
+
+The repository currently provides detector adapters for Ultralytics-based model families, including:
+
+- YOLO-family detectors such as YOLOv8 and YOLO11
+- RT-DETR
+- A common `ModelPrediction` representation for downstream processing
+
+### Counting
+
+The current counting definition is deliberately simple:
+
+**one valid detection in one image = one counted object.**
+
+Counting utilities support operations such as confidence filtering, class filtering, area/aspect-ratio filtering, ROI filtering, and visualization/export.
+
+{% hint style="warning" %}
+Image-level counting is **not** unique-vehicle counting across time. A video system that counts each physical vehicle once requires tracking and persistent identities.
+{% endhint %}
+
+### Dataset pipeline
+
+VisDrone is the primary implemented aerial dataset.
+
+The repository includes:
+
+- VisDrone annotation parsing
+- vehicle-class mapping
+- YOLO-format conversion
+- dataset validation
+- reusable dataset configuration
+- test fixtures for conversion logic
+
+UAVDT and later datasets are planned extensions unless explicitly marked as implemented in the repository documentation.
+
+## Architecture
+
+~~~
 flowchart LR
-    A[Aerial / UAV Image] --> B[Dataset & Image Validation]
+    A[Aerial / UAV Image] --> B[Dataset Validation]
     B --> C[Detector Adapter]
     C --> D[Standardized ModelPrediction]
-    D --> E[Confidence / Class / ROI Filters]
+    D --> E[Post-processing]
     E --> F[Vehicle Counting]
-    F --> G[Visualization & Export]
-    G --> H[Experiment Comparison]
+    F --> G[Visualization / Export]
+    G --> H[Experiment Analysis]
 
-    C -. model backends .-> Y[YOLO variants]
-    C -. model backends .-> R[RT-DETR]
-```
+    C --> Y[YOLO family]
+    C --> R[RT-DETR]
+~~~
 
-The key design idea is simple: **models may differ, but downstream code should not have to.** Every supported detector is normalized into the same prediction structures before counting and visualization.
+The important boundary is the detector adapter.
 
-## What the repository contains
+A model produces raw framework-specific output. AeroNetra normalizes that output into shared prediction objects so the rest of the pipeline does not need to know whether the detector is YOLO-based or transformer-based.
 
-| Area                                   | Purpose                                                       |
-| -------------------------------------- | ------------------------------------------------------------- |
-| `src/aeronetra/detection/`             | Detector adapters and standardized prediction types           |
-| `src/aeronetra/counting/`              | Filtering, NMS, ROI logic, counting, drawing and export       |
-| `src/aeronetra/datasets/`              | Dataset parsing and conversion; VisDrone is implemented       |
-| `src/aeronetra/visualization/`         | Plotting and visual analysis utilities                        |
-| `configs/`                             | Dataset and inference configuration                           |
-| `notebooks/`                           | Local exploration and inference workflow                      |
-| `kaggle/`                              | GPU-oriented preparation, training, evaluation and comparison |
-| `scripts/`                             | Dataset download and validation utilities                     |
-| `tests/`                               | Automated tests and fixtures                                  |
-| `px4_ros2_jazzy_gazebo_harmonic_sitl/` | PX4 + ROS 2 + Gazebo simulation documentation                 |
+## Repository structure
 
-## End-to-end research workflow
-
-```mermaid
-flowchart TD
-    A[Raw VisDrone data] --> B[Validate annotations]
-    B --> C[Convert to training format]
-    C --> D[Train / fine-tune on Kaggle GPU]
-    D --> E[Download trained weights]
-    E --> F[Load through get_model_adapter]
-    F --> G[Run inference]
-    G --> H[Filter detections]
-    H --> I[Count vehicles]
-    I --> J[Visualize results]
-    J --> K[Record metadata & compare models]
-```
-
-### Prerequisites
-
-* Python 3.10 or higher (developed on 3.12)
-* OS: Linux, macOS, or Windows
-* GPU (optional): A CUDA-capable GPU is required for training on Kaggle. Inference on CPU works but is slower; a GPU is recommended for batch inference.
-* Disk space: \~3 GB for the VisDrone dataset and model weights
+~~~
+AeroNetra-computervision/
+├── src/
+│   └── aeronetra/
+│       ├── detection/        # Adapters, prediction types, model interfaces
+│       ├── counting/         # Filtering, counting, drawing, export
+│       ├── datasets/         # Dataset parsing and conversion
+│       └── visualization/    # Visualization helpers
+│
+├── configs/                  # Dataset and inference configuration
+├── notebooks/                # Local experiments and inference workflows
+├── kaggle/                   # GPU-oriented preparation, training, evaluation
+├── scripts/                  # Dataset download and validation utilities
+├── tests/                    # Automated tests and fixtures
+├── docs/                     # Detailed project documentation
+└── px4_ros2_jazzy_gazebo_harmonic_sitl/
+                             # UAV simulation integration documentation
+~~~
 
 ## Quick start
 
-```bash
-python -m venv venv
-source venv/bin/activate   # Linux/macOS
-# venv\Scripts\activate   # Windows
+### 1. Clone the repository
 
+~~~
+git clone https://github.com/Pratyush061/AeroNetra-computervision.git
+cd AeroNetra-computervision
+~~~
+
+### 2. Create a Python environment
+
+AeroNetra currently targets Python 3.11+.
+
+~~~
+python -m venv .venv
+~~~
+
+Activate it:
+
+~~~
+# Linux / macOS
+source .venv/bin/activate
+
+# Windows
+.venv\Scripts\activate
+~~~
+
+### 3. Install dependencies
+
+~~~
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
 pip install -e .
-```
+~~~
 
-Configure dataset paths:
+### 4. Configure the environment
 
-```bash
+~~~
 cp .env.example .env
-```
+~~~
 
-Edit `.env` to set the following variables:
+Set the dataset/output locations appropriate for your machine. See [Environment Setup](docs/ENVIRONMENT_SETUP.md) for the complete configuration reference.
 
-| Variable       | Description                                 | Example                    |
-| -------------- | ------------------------------------------- | -------------------------- |
-| `DATA_DIR`     | Root directory for raw datasets             | `/data/aeronetra`          |
-| `VISDRONE_DIR` | Path to VisDrone dataset                    | `${DATA_DIR}/VisDrone2019` |
-| `WEIGHTS_DIR`  | Directory for trained model weights         | `${DATA_DIR}/weights`      |
-| `OUTPUTS_DIR`  | Directory for inference outputs and exports | `./outputs`                |
+### 5. Verify the installation
 
-See [docs/ENVIRONMENT\_SETUP.md](docs/ENVIRONMENT_SETUP.md) for full setup details.
-
-#### 3. Download a dataset
-
-```bash
-python scripts/download_dataset.py --dataset banuprasadb/visdrone-dataset --dest data/raw/VisDrone2019 --download
-```
-
-Then verify the package:
-
-```bash
+~~~
 python -c "import aeronetra; print(aeronetra.__version__)"
 ruff check .
 pytest
-```
+~~~
 
-## Choose your path
+## Run inference
 
-<table data-view="cards"><thead><tr><th></th><th></th></tr></thead><tbody><tr><td><strong>Set up the project</strong></td><td><a href="docs/ENVIRONMENT_SETUP.md">Environment Setup</a></td></tr><tr><td><strong>Understand the data</strong></td><td><a href="docs/DATASETS.md">Datasets Guide</a></td></tr><tr><td><strong>Run a detector</strong></td><td><a href="docs/MODEL_INFERENCE.md">Model Inference Guide</a></td></tr><tr><td><strong>Understand counting</strong></td><td><a href="docs/COUNTING_METHODOLOGY.md">Counting Methodology</a></td></tr><tr><td><strong>Compare architectures</strong></td><td><a href="docs/MODEL_COMPARISON.md">Model Comparison</a></td></tr><tr><td><strong>See the roadmap</strong></td><td><a href="docs/RESEARCH_SCOPE.md">Research Scope</a></td></tr></tbody></table>
+AeroNetra exposes a common detector-adapter interface.
 
-## Research principles
+~~~python
+from aeronetra.detection.adapters import get_model_adapter
 
-* **Reproducibility over impressive-looking demos.** Parameters, dataset split, model weights and timing should be recorded.
-* **No fabricated benchmarks.** A model is not “best” until it is measured under the same evaluation conditions.
-* **Raw data remains immutable.** Transformations go to processed directories.
-* **Model-specific behavior stays inside adapters.** Counting code consumes standardized predictions.
-* **Phase boundaries matter.** Image counting is not the same as multi-object tracking.
+adapter = get_model_adapter(
+    model_name="YOLOv8",
+    weights_path="outputs/models/yolov8n.pt",
+    class_names={
+        0: "car",
+        1: "van",
+        2: "truck",
+        3: "tricycle",
+        4: "awning-tricycle",
+        5: "bus",
+        6: "motor",
+        7: "bicycle",
+    },
+    device="cpu",
+)
 
-## Current roadmap
+adapter.load_model()
+prediction = adapter.predict(
+    image,
+    conf_thresh=0.25,
+    iou_thresh=0.45,
+)
+~~~
 
-```mermaid
+The returned `ModelPrediction` can then be passed through shared filtering and counting code:
+
+~~~python
+filtered = prediction.filter_by_confidence(0.5)
+
+from aeronetra.counting.ops import count_vehicles
+from aeronetra.counting.drawing import draw_detections
+
+total, by_class = count_vehicles(filtered.detections)
+annotated = draw_detections(image.copy(), filtered.detections)
+
+print("Total vehicles:", total)
+print("Per-class:", by_class)
+~~~
+
+For the architecture, lifecycle, failure modes, and reproducibility requirements, see [Model Inference Guide](docs/MODEL_INFERENCE.md).
+
+## Train on Kaggle
+
+Training and heavier evaluation are designed to run on GPU-capable environments such as Kaggle.
+
+The repository keeps the GPU workflow separate from the local package so local development can focus on reusable code, validation, and inference.
+
+~~~
+Kaggle
+  │
+  ├── 01_dataset_preparation
+  │        ↓
+  │   YOLO-format dataset
+  │        ↓
+  ├── 02_model_training
+  │        ↓
+  │   trained weights
+  │        ↓
+  ├── 03_model_evaluation
+  │        ↓
+  │   metrics / plots
+  │        ↓
+  └── 04_inference_comparison
+           ↓
+      visual + speed analysis
+~~~
+
+See the dedicated [Kaggle workflow guide](kaggle/README.md).
+
+## Datasets
+
+VisDrone is the primary implemented dataset.
+
+The dataset pipeline follows this pattern:
+
+~~~
+Raw dataset
+    ↓
+Validation
+    ↓
+Class mapping
+    ↓
+YOLO conversion
+    ↓
+Processed dataset
+    ↓
+Training / evaluation
+~~~
+
+The repository keeps raw data separate from processed artifacts so conversion steps remain explicit and repeatable.
+
+See [Datasets Guide](docs/DATASETS.md).
+
+## Model comparison
+
+AeroNetra is intended for controlled comparisons rather than informal model screenshots.
+
+When comparing models, keep the evaluation conditions explicit:
+
+| Parameter | Record it? |
+| --- | ---: |
+| Dataset and split | ✅ |
+| Model architecture | ✅ |
+| Model weights/version | ✅ |
+| Image size | ✅ |
+| Confidence threshold | ✅ |
+| IoU threshold | ✅ |
+| Device / hardware | ✅ |
+| Inference latency | ✅ |
+| Precision / recall | ✅ |
+| mAP@50 | ✅ |
+| mAP@50-95 | ✅ |
+| Counting error | ✅ |
+
+A fair comparison also needs architecture-aware post-processing. For example, RT-DETR should not automatically be forced through a YOLO-style external NMS path.
+
+See [Model Comparison](docs/MODEL_COMPARISON.md).
+
+## Reproducibility
+
+AeroNetra treats reproducibility as part of the implementation, not as a final reporting step.
+
+For a meaningful experiment, record:
+
+- the exact dataset and split
+- class mapping
+- model family and weights
+- image size
+- confidence and IoU thresholds
+- filtering/ROI rules
+- device and runtime environment
+- evaluation metrics
+- inference timing
+- generated artifacts
+
+{% hint style="warning" %}
+Do not describe a model as “best” from a single visual example or from results produced under different data, thresholds, splits, or post-processing rules.
+{% endhint %}
+
+## Documentation
+
+| Topic | Guide |
+| --- | --- |
+| Environment setup | [docs/ENVIRONMENT_SETUP.md](docs/ENVIRONMENT_SETUP.md) |
+| Dataset lifecycle | [docs/DATASETS.md](docs/DATASETS.md) |
+| Model inference | [docs/MODEL_INFERENCE.md](docs/MODEL_INFERENCE.md) |
+| Model comparison | [docs/MODEL_COMPARISON.md](docs/MODEL_COMPARISON.md) |
+| Counting methodology | [docs/COUNTING_METHODOLOGY.md](docs/COUNTING_METHODOLOGY.md) |
+| Research scope | [docs/RESEARCH_SCOPE.md](docs/RESEARCH_SCOPE.md) |
+| Kaggle notebooks | [kaggle/README.md](kaggle/README.md) |
+
+## Development
+
+Run the validation suite before submitting changes:
+
+~~~
+ruff check .
+pytest
+~~~
+
+The project uses Ruff for linting and pytest for automated tests. Notebook files are intentionally excluded from Ruff's default repository-wide linting configuration.
+
+For changes to detection behavior, dataset conversion, or counting logic, add or update tests alongside the implementation.
+
+## Research roadmap
+
+~~~
 flowchart LR
-    P1[Phase 1<br/>Static Detection & Counting] --> P2[Phase 2<br/>Aerial Fine-tuning]
+    P1[Phase 1<br/>Static Detection & Counting]
+    --> P2[Phase 2<br/>Aerial Fine-tuning]
     P2 --> P3[Phase 3<br/>Video Tracking]
     P3 --> P4[Phase 4<br/>Traffic & Geospatial Analytics]
     P4 --> P5[Phase 5<br/>Edge / UAV Integration]
-```
+~~~
 
-{% hint style="warning" %}
-Some modules are intentionally incomplete. UAVDT support is stubbed, and later-phase tracking/analytics capabilities should not be presented as implemented functionality.
-{% endhint %}
+| Phase | Focus | Status |
+| --- | --- | --- |
+| 1 | Static detection and image-level counting | Current |
+| 2 | Aerial fine-tuning and model improvement | Planned |
+| 3 | Video tracking and unique vehicle counts | Planned |
+| 4 | Traffic and geospatial analytics | Planned |
+| 5 | UAV / edge integration | Planned |
+
+The roadmap is intentionally phased. Later capabilities should build on measurable detection and counting behavior rather than being presented as already implemented.
+
+## Project status
+
+AeroNetra is an active research codebase.
+
+The repository contains implemented detection/counting components, dataset tooling, tests, local notebooks, and a Kaggle experimentation workflow. Some future integrations and dataset modules remain incomplete by design.
+
+## Contributing
+
+Contributions are welcome, especially improvements that make the pipeline more reproducible, testable, and easier to extend.
+
+For a useful contribution:
+
+1. Keep model-specific logic inside adapters.
+2. Keep raw datasets immutable.
+3. Add tests for behavior that changes.
+4. Document new assumptions and configuration.
+5. Avoid reporting unverified benchmark results as established facts.
+
+## License
+
+AeroNetra is released under the [MIT License](LICENSE).
+
+## Acknowledgements
+
+AeroNetra builds on the work of the computer-vision and open-source communities, including the datasets and model frameworks used by the project.
+
+Please review the license and usage terms of upstream datasets and model dependencies before redistribution or commercial deployment.
+
+---
+
+<p align="center">
+  <sub>Built for reproducible UAV computer-vision research.</sub>
+</p>
