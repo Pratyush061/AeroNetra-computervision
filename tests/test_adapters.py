@@ -1,4 +1,6 @@
-import math
+"""Unit tests for the detector adapter factory and output normalization."""
+
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -7,8 +9,8 @@ from aeronetra.detection.adapters import UltralyticsAdapter, get_model_adapter
 
 
 class _TensorLike:
-    """Minimal stand-in for a torch tensor exposing the `.cpu().numpy()` API
-    the adapter relies on, so this test needs no deep-learning dependency."""
+    """Stand-in for a torch tensor exposing the `.cpu().numpy()` API the
+    adapter relies on, so these tests need no deep-learning dependency."""
 
     def __init__(self, array):
         self._array = np.asarray(array)
@@ -20,63 +22,48 @@ class _TensorLike:
         return self._array
 
 
-class MockResultBox:
-    def __init__(self):
-        self.xyxy = _TensorLike([[10.0, 10.0, 50.0, 50.0]])
-        self.conf = _TensorLike([0.9])
-        self.cls = _TensorLike([2])
+def _mock_model():
+    """Fake Ultralytics model that returns a single canned detection."""
+    boxes = SimpleNamespace(
+        xyxy=_TensorLike([[10.0, 10.0, 50.0, 50.0]]),
+        conf=_TensorLike([0.9]),
+        cls=_TensorLike([2]),
+    )
+    return SimpleNamespace(predict=lambda **_: [SimpleNamespace(boxes=boxes)])
 
 
-class MockResult:
-    def __init__(self):
-        self.boxes = MockResultBox()
+def test_predict_normalizes_boxes(monkeypatch):
+    def fake_load(self):
+        self.model = _mock_model()
 
-
-class MockYOLOModel:
-    def __init__(self):
-        self.device = "cpu"
-
-    def to(self, device):
-        pass
-
-    def predict(self, source, conf, iou, device, verbose):
-        return [MockResult()]
-
-
-def test_adapter_normalization(monkeypatch):
-    def mock_load(self):
-        self.model = MockYOLOModel()
-
-    monkeypatch.setattr(UltralyticsAdapter, "load_model", mock_load)
-
-    class_names = {0: "person", 2: "car"}
-    adapter = get_model_adapter("YOLOv8", "yolov8n.pt", class_names)
+    monkeypatch.setattr(UltralyticsAdapter, "load_model", fake_load)
+    adapter = get_model_adapter("YOLOv8", "yolov8n.pt", {0: "person", 2: "car"})
     adapter.load_model()
 
-    dummy_image = np.zeros((100, 100, 3), dtype=np.uint8)
-    prediction = adapter.predict(dummy_image)
+    prediction = adapter.predict(np.zeros((100, 100, 3), dtype=np.uint8))
 
     assert len(prediction.detections) == 1
     det = prediction.detections[0]
-    assert det.class_name == "car"
-    assert det.class_id == 2
-    assert math.isclose(det.confidence, 0.9, rel_tol=1e-5)
-    assert det.box.xmin == 10.0
+    assert (det.class_id, det.class_name) == (2, "car")
+    assert det.confidence == pytest.approx(0.9)
+    assert det.box.xyxy == (10.0, 10.0, 50.0, 50.0)
 
 
-def test_adapter_unsupported_model():
+@pytest.mark.parametrize(
+    "model_name", ["YOLOv8", "YOLO11", "YOLO26", "RT-DETR", "rtdetr"]
+)
+def test_supported_models_build_ultralytics_adapter(model_name):
+    adapter = get_model_adapter(model_name, "weights.pt", {0: "vehicle"})
+    assert isinstance(adapter, UltralyticsAdapter)
+    assert adapter.model_type == model_name
+
+
+def test_unsupported_model_raises():
     with pytest.raises(ValueError, match="No adapter available for model"):
         get_model_adapter("FasterRCNN", "weights.pt", {0: "vehicle"})
 
 
-def test_adapter_rtdetr_pattern():
-    adapter = get_model_adapter("RT-DETR", "rtdetr-l.pt", {0: "vehicle"})
-    assert isinstance(adapter, UltralyticsAdapter)
-    assert adapter.model_type == "RT-DETR"
-
-
-def test_adapter_predict_without_load():
+def test_predict_before_load_raises():
     adapter = get_model_adapter("YOLOv8", "yolov8n.pt", {0: "vehicle"})
-    dummy_image = np.zeros((10, 10, 3), dtype=np.uint8)
-    with pytest.raises(RuntimeError, match="Model is not loaded"):
-        adapter.predict(dummy_image)
+    with pytest.raises(RuntimeError, match="Model not loaded"):
+        adapter.predict(np.zeros((10, 10, 3), dtype=np.uint8))
