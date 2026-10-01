@@ -65,7 +65,7 @@ Committed notebook outputs bloat the repository and cause noisy git diffs. Alway
 ## Adding a New Notebook
 
 1. Follow the numbering convention: `NN_descriptive_name.ipynb`.
-2. Import from `src/aeronetra/` — do not reimplement existing functions.
+2. Resolve the repository root, add `src/` to `sys.path`, and import from the `aeronetra.*` package namespace — do not import through `src.aeronetra` or reimplement existing functions.
 3. Use `InferenceMetadata` for any inference runs (see [EXPERIMENT_GUIDE.md](EXPERIMENT_GUIDE.md)).
 4. Add a markdown header cell describing the notebook's purpose.
 5. Clear outputs before committing.
