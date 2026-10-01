@@ -39,6 +39,17 @@ def test_load_yaml():
     assert cfg["iou_threshold"] == 0.45
 
 
+def test_load_yaml_expands_environment_variables(monkeypatch):
+    monkeypatch.setenv("DATASET_DIR", "/custom/dataset")
+    monkeypatch.setenv("OUTPUT_DIR", "/custom/output")
+
+    cfg = config.load_yaml(config.CONFIGS_DIR / "datasets" / "visdrone_yolo.yaml")
+
+    assert cfg["paths"]["train"]["images"] == "/custom/dataset/processed/visdrone/train/images"
+    assert cfg["paths"]["val"]["labels"] == "/custom/dataset/processed/visdrone/val/labels"
+    assert cfg["paths"]["test"]["images"] == "/custom/dataset/processed/visdrone/test/images"
+
+
 def test_load_yaml_missing():
     import pytest
     with pytest.raises(FileNotFoundError):
