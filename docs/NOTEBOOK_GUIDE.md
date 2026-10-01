@@ -18,7 +18,7 @@ Notebooks in this repository are for exploration, experimentation, and presentin
 | 07 | `07_model_training.ipynb` | Fine-tuning models on VisDrone dataset | Yes |
 | 08 | `08_model_evaluation.ipynb` | Compare model performance on validation split | Recommended |
 
-Notebooks 03–06 are **independent** — each handles a single model architecture. Weights must be loaded explicitly; models should never be silently substituted.
+Notebooks 03–06 are **independent** — each handles a single model architecture. Weights must be loaded explicitly; models should never be silently substituted. Notebook 03 uses an explicit COCO YOLO26 baseline because the Kaggle training pipeline does not produce YOLO26 weights; notebooks 04–06 use the VisDrone-trained weights produced by Kaggle notebook 02.
 
 ---
 
