@@ -44,13 +44,13 @@ Use in local notebooks 03–06
 ### Step 1: Upload VisDrone Dataset
 
 Add the public VisDrone dataset to Kaggle:
-- Search for `shisuiotsutsuki/visdrone2019-det` on Kaggle Datasets
-- Or upload your own VisDrone-DET dataset
+- Add the canonical public dataset: `banuprasadb/visdrone-dataset` on Kaggle
+- 
 
 ### Step 2: Run Notebook 01 (Dataset Prep)
 
 1. Create a new Kaggle notebook
-2. Add dataset: `visdrone2019-det`
+2. Add dataset: `banuprasadb/visdrone-dataset`
 3. Upload `01_dataset_preparation.ipynb`
 4. Run all cells
 5. **Save the output as a new Kaggle dataset** → name it `aeronetra-visdrone-yolo`
@@ -91,7 +91,7 @@ from aeronetra.detection.adapters import get_model_adapter
 adapter = get_model_adapter(
     model_name="YOLOv8",
     weights_path="outputs/models/yolov8n_visdrone_best.pt",
-    class_names={0: "car", 1: "van", 2: "truck", ...},
+    class_names={0: "car", 1: "van", 2: "truck", 3: "tricycle", 4: "awning-tricycle", 5: "bus", 6: "motor", 7: "bicycle"},
     device="cpu",
 )
 adapter.load_model()

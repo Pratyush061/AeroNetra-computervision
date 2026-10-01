@@ -115,7 +115,7 @@ If using `scripts/download_dataset.py` to download VisDrone from Kaggle:
    ```
 5. Download using the script (requires explicit `--download` flag):
    ```bash
-   python scripts/download_dataset.py --download
+   python scripts/download_dataset.py --dataset banuprasadb/visdrone-dataset --dest data/raw/VisDrone2019 --download
 
    ## GPU Training on Kaggle (Recommended Alternative)
 

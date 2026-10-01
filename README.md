@@ -100,8 +100,8 @@ See [docs/ENVIRONMENT\_SETUP.md](docs/ENVIRONMENT_SETUP.md) for full setup detai
 
 #### 3. Download a dataset
 
-```python
-python scripts/download_visdrone.py --output-dir data/VisDrone2019
+```bash
+python scripts/download_dataset.py --dataset banuprasadb/visdrone-dataset --dest data/raw/VisDrone2019 --download
 ```
 
 Then verify the package:
