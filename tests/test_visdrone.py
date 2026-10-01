@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from aeronetra.datasets.visdrone import (
+    VISDRONE_VEHICLE_CLASSES,
     convert_dataset,
     convert_to_yolo_format,
     map_category,
@@ -23,6 +24,7 @@ def test_parse_visdrone_row():
     assert parse_visdrone_row("684,8,273") is None
     assert parse_visdrone_row("a,b,c,d,e,f,g,h") is None
 
+
 def test_map_category():
     # Merged mode
     assert map_category(4, "merged") == 0 # car -> vehicle
@@ -36,6 +38,26 @@ def test_map_category():
     assert map_category(0, "separate") is None # ignored region
     assert map_category(1, "separate") is None # pedestrian
     assert map_category(11, "separate") is None # others
+
+
+def test_visdrone_vehicle_class_ids():
+    assert list(VISDRONE_VEHICLE_CLASSES) == [3, 4, 5, 6, 7, 8, 9, 10]
+
+    expected_separate = {
+        3: 7,
+        4: 0,
+        5: 1,
+        6: 2,
+        7: 3,
+        8: 4,
+        9: 5,
+        10: 6,
+    }
+    assert {
+        category: map_category(category, "separate")
+        for category in VISDRONE_VEHICLE_CLASSES
+    } == expected_separate
+
 
 def test_convert_to_yolo_format():
     img_w, img_h = 1000, 1000
@@ -61,6 +83,7 @@ def test_convert_to_yolo_format():
     # But in logic right = min(img_width, left + width). -200+100=-100.
     # w = -100 - 0 = -100 <= 0 -> returns None
     assert convert_to_yolo_format(box_zero, img_w, img_h) is None
+
 
 def test_convert_dataset(tmp_path):
     images_dir = Path("tests/fixtures/images")

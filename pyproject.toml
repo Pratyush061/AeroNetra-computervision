@@ -11,6 +11,14 @@ requires-python = ">=3.11"
 authors = [
     { name = "AeroNetra Team" }
 ]
+# Import-time runtime requirements. The ultralytics/torch stack is deliberately
+# absent: the adapter imports it lazily, so it stays an optional backend.
+dependencies = [
+    "numpy",
+    "opencv-python-headless",
+    "PyYAML",
+    "matplotlib",
+]
 
 [tool.ruff]
 line-length = 88

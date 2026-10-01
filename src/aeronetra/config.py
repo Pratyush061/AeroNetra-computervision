@@ -31,8 +31,21 @@ def get_output_dir() -> Path:
     return Path(os.environ.get("OUTPUT_DIR", str(OUTPUT_DIR)))
 
 
+def _expand_env(value: Any) -> Any:
+    """Recursively expand ${VAR} references in string values."""
+    if isinstance(value, str):
+        return os.path.expandvars(value)
+    if isinstance(value, dict):
+        return {key: _expand_env(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_expand_env(item) for item in value]
+    return value
+
+
 def load_yaml(config_path: Path) -> dict[str, Any]:
     """Load a YAML configuration file and return its contents as a dict.
+
+    ${VAR} references in the file are expanded from the environment.
 
     Raises:
         FileNotFoundError: If the config file does not exist.
@@ -40,7 +53,7 @@ def load_yaml(config_path: Path) -> dict[str, Any]:
     if not config_path.exists():
         raise FileNotFoundError(f"Config file not found: {config_path}")
     with open(config_path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f) or {}
+        return _expand_env(yaml.safe_load(f) or {})
 
 
 def load_inference_config() -> dict[str, Any]:
