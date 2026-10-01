@@ -6,14 +6,14 @@ datasets:
     viewpoint: "Aerial"
     expected_format: "VisDrone original (TXT)"
     vehicle_classes:
-      - 2 # bicycle
-      - 3 # car
-      - 4 # van
-      - 5 # truck
-      - 6 # tricycle
-      - 7 # awning-tricycle
-      - 8 # bus
-      - 9 # motor
+      - 3 # bicycle
+      - 4 # car
+      - 5 # van
+      - 6 # truck
+      - 7 # tricycle
+      - 8 # awning-tricycle
+      - 9 # bus
+      - 10 # motor
     license: "Unknown (Typically non-commercial research, verify official source)"
     expected_structure: |
       VisDrone2019/
