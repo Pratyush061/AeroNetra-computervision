@@ -7,6 +7,7 @@
   * [Counting Methodology](docs/COUNTING_METHODOLOGY.md)
   * [Datasets Guide](docs/DATASETS.md)
   * [Environment Setup](docs/ENVIRONMENT_SETUP.md)
+  * [Evaluation Guide](docs/EVALUATION.md)
   * [Experiment Guide](docs/EXPERIMENT_GUIDE.md)
   * [Limitations](docs/LIMITATIONS.md)
   * [Model Comparison](docs/MODEL_COMPARISON.md)

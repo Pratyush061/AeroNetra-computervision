@@ -37,6 +37,12 @@ This repository is **AeroNetra**, a computer-vision research project for UAV/dro
 │   │   └── uavdt.py
 │   ├── visualization/
 │   ├── evaluation/
+│   │   ├── matching.py
+│   │   ├── detection.py
+│   │   ├── counting.py
+│   │   ├── groundtruth.py
+│   │   ├── report.py
+│   │   └── types.py
 │   └── utils/
 ├── configs/
 ├── notebooks/
@@ -65,7 +71,6 @@ Never fabricate implementations or claim these work:
 | Path                              | Status                             |
 | --------------------------------- | ---------------------------------- |
 | `src/aeronetra/datasets/uavdt.py` | Stub; raises `NotImplementedError` |
-| `src/aeronetra/evaluation/`       | Empty / placeholder                |
 | `src/aeronetra/utils/`            | Empty / placeholder                |
 | `configs/experiments/`            | No experiment configs yet          |
 | `configs/models/`                 | No model configs yet               |
@@ -198,6 +203,17 @@ Use existing functions in `src/aeronetra/counting/` for coordinate conversion, c
 * Clear notebook outputs before committing.
 * Keep model weights, datasets and generated outputs out of version control.
 * Add tests for new reusable modules.
+
+### Evaluation package
+
+`src/aeronetra/evaluation/` is implemented and tested. It consumes `ModelPrediction` objects and a separate `GroundTruth` set (annotated class + box, with no confidence). Use it instead of hand-rolling metric code:
+
+* `evaluate_detection()` → precision, recall, F1, mAP@50, mAP@50-95 and per-class metrics.
+* `evaluate_counting()` → MAE, RMSE, signed bias and MAPE against ground-truth counts.
+* `evaluate_all()` / `save_report()` → one JSON report combining both, ready for `outputs/metrics/`.
+* `load_yolo_ground_truth()` / `load_visdrone_ground_truth()` → ground-truth loaders that reuse the existing coordinate helpers.
+
+Rules: do not fabricate metric values, do not average mAP over classes that have no ground truth, and do not apply NMS or other YOLO-specific post-processing to RT-DETR output before evaluating.
 
 ***
 
