@@ -47,6 +47,7 @@ The current research phase is **Phase 1: static-image detection and counting**. 
 - **Counting** — coordinate conversion, clipping, area/aspect-ratio/ROI filtering, NMS, and image-level counting, with drawing and JSON/CSV export.
 - **Datasets** — a VisDrone parser, class mapping, and YOLO-format converter, with fixtures and unit tests.
 - **Evaluation** — IoU matching, precision/recall/F1, mAP@50 and mAP@50-95, and count-error metrics (MAE/RMSE/bias/MAPE), with ground-truth loaders for YOLO and VisDrone labels and JSON report export.
+- **Utilities** — deterministic seeding (`set_seed`), filesystem helpers (`ensure_dir`), and logging setup (`configure_logging`).
 - **Tooling** — dataset download/validation scripts, a shared inference config, and a Ruff + pytest CI workflow.
 
 ### 🚧 What is intentionally not implemented
@@ -54,7 +55,6 @@ The current research phase is **Phase 1: static-image detection and counting**. 
 | Path | Status |
 | --- | --- |
 | `src/aeronetra/datasets/uavdt.py` | Stub — raises `NotImplementedError` |
-| `src/aeronetra/utils/` | Placeholder |
 | Video tracking / geospatial / edge deployment | Later research phases |
 
 Nothing here fabricates results: unimplemented modules fail loudly rather than returning fake data.
@@ -113,6 +113,9 @@ AeroNetra-computervision/
 | `evaluation/detection.py` | IoU matching, precision/recall/F1, mAP@50 and mAP@50-95 |
 | `evaluation/counting.py` | Count-error metrics (MAE, RMSE, bias, MAPE) |
 | `evaluation/groundtruth.py` | Ground-truth loaders for YOLO and VisDrone labels |
+| `utils/seeding.py` | `set_seed()` — deterministic seeding for Python, NumPy and torch |
+| `utils/paths.py` | `ensure_dir()` — idempotent directory creation |
+| `utils/logs.py` | `configure_logging()` — shared logging setup |
 | `config.py` | Resolves `DATASET_DIR` / `OUTPUT_DIR` and loads YAML configs |
 
 ---

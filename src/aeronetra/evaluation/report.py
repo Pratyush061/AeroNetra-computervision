@@ -12,6 +12,7 @@ from aeronetra.evaluation.detection import (
     evaluate_detection,
 )
 from aeronetra.evaluation.types import EvaluationReport, GroundTruth
+from aeronetra.utils.paths import ensure_dir
 
 
 def evaluate_all(
@@ -52,5 +53,5 @@ def evaluate_all(
 
 def save_report(report: EvaluationReport, output_path: Path) -> None:
     """Write a report to ``output_path`` as indented JSON."""
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    ensure_dir(output_path.parent)
     output_path.write_text(json.dumps(report.to_dict(), indent=2), encoding="utf-8")

@@ -44,6 +44,9 @@ This repository is **AeroNetra**, a computer-vision research project for UAV/dro
 │   │   ├── report.py
 │   │   └── types.py
 │   └── utils/
+│       ├── seeding.py
+│       ├── paths.py
+│       └── logs.py
 ├── configs/
 ├── notebooks/
 ├── kaggle/
@@ -71,7 +74,6 @@ Never fabricate implementations or claim these work:
 | Path                              | Status                             |
 | --------------------------------- | ---------------------------------- |
 | `src/aeronetra/datasets/uavdt.py` | Stub; raises `NotImplementedError` |
-| `src/aeronetra/utils/`            | Empty / placeholder                |
 | `configs/experiments/`            | No experiment configs yet          |
 | `configs/models/`                 | No model configs yet               |
 
@@ -214,6 +216,14 @@ Use existing functions in `src/aeronetra/counting/` for coordinate conversion, c
 * `load_yolo_ground_truth()` / `load_visdrone_ground_truth()` → ground-truth loaders that reuse the existing coordinate helpers.
 
 Rules: do not fabricate metric values, do not average mAP over classes that have no ground truth, and do not apply NMS or other YOLO-specific post-processing to RT-DETR output before evaluating.
+
+### Utilities package
+
+`src/aeronetra/utils/` is implemented and tested:
+
+* `set_seed(seed)` seeds Python, NumPy and (when installed) torch — call it at the start of any run and record the seed in `InferenceMetadata`.
+* `ensure_dir(path)` creates a directory and its parents idempotently; use it instead of a raw `mkdir(parents=True, exist_ok=True)`.
+* `configure_logging(level)` sets the root logger format and level for scripts and notebooks.
 
 ***
 
