@@ -4,6 +4,7 @@ Ground truth is kept separate from :class:`~aeronetra.detection.types.Detection`
 an annotated object has a class and a box but no confidence or model provenance.
 """
 
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
@@ -40,9 +41,20 @@ class GroundTruth:
         """Return the set of class ids that appear in the annotations."""
         return {obj.class_id for image in self.images.values() for obj in image.objects}
 
-    def counts_by_image(self) -> dict[str, int]:
-        """Return the number of annotated objects per image."""
-        return {image_id: len(image.objects) for image_id, image in self.images.items()}
+    def counts_by_image(
+        self,
+        class_ids: Sequence[int] | set[int] | None = None,
+    ) -> dict[str, int]:
+        """Return annotated object counts per image, optionally by class."""
+        allowed = None if class_ids is None else set(class_ids)
+        return {
+            image_id: sum(
+                1
+                for obj in image.objects
+                if allowed is None or obj.class_id in allowed
+            )
+            for image_id, image in self.images.items()
+        }
 
     def total_objects(self) -> int:
         """Return the total number of annotated objects."""
