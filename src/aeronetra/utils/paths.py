@@ -3,12 +3,13 @@
 from pathlib import Path
 
 
-def ensure_dir(path: Path) -> Path:
-    """Create ``path`` and any missing parents, then return it.
+def ensure_dir(path: Path | str) -> Path:
+    """Create ``path`` and any missing parents, then return it as a ``Path``.
 
     Centralises the ``mkdir(parents=True, exist_ok=True)`` idiom used by the
     dataset converters and the report/export writers, so directory creation
-    stays consistent and idempotent.
+    stays consistent and idempotent. Accepts a ``str`` or a ``Path``.
     """
-    path.mkdir(parents=True, exist_ok=True)
-    return path
+    resolved = Path(path)
+    resolved.mkdir(parents=True, exist_ok=True)
+    return resolved
