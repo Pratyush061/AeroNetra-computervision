@@ -5,6 +5,7 @@ an annotated object has a class and a box but no confidence or model provenance.
 """
 
 from dataclasses import asdict, dataclass, field
+from typing import Any
 
 from aeronetra.detection.types import BoundingBox, InferenceMetadata
 
@@ -85,6 +86,7 @@ class DetectionMetrics:
     num_ground_truth: int
     num_detections: int
     operating_confidence: float
+    ap_confidence: float
     match_iou: float
     iou_thresholds: list[float]
     mean_inference_ms: float
@@ -128,6 +130,6 @@ class EvaluationReport:
     counting: CountMetrics
     metadata: InferenceMetadata | None = None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serialisable dict of the whole report."""
         return asdict(self)

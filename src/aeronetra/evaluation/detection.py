@@ -18,6 +18,10 @@ DEFAULT_IOU_THRESHOLDS: tuple[float, ...] = tuple(
 )
 # The single IoU used for the reported precision/recall/f1 operating point.
 OPERATING_IOU = 0.5
+# Average precision is built from near-all detections, so it is not truncated by
+# the (higher) operating-point threshold. A small floor keeps zero-confidence
+# rows out without changing the curve.
+DEFAULT_AP_CONFIDENCE = 0.001
 
 
 def _safe_ratio(numerator: float, denominator: float) -> float:
@@ -123,15 +127,25 @@ def evaluate_detection(
     ground_truth: GroundTruth,
     iou_thresholds: Sequence[float] = DEFAULT_IOU_THRESHOLDS,
     conf_threshold: float = 0.25,
+    ap_conf_threshold: float = DEFAULT_AP_CONFIDENCE,
     class_aware: bool = True,
 ) -> DetectionMetrics:
     """Evaluate detections against ground truth.
+
+    Two confidence thresholds are used deliberately, mirroring COCO:
+
+    * ``ap_conf_threshold`` (low) selects the detections that build the
+      precision/recall curve, so mAP is not truncated by the operating point.
+    * ``conf_threshold`` (higher) is the operating point reported as
+      precision/recall/F1 and reported in ``num_detections``. Counting should
+      use the same threshold.
 
     Args:
         predictions: Standardised predictions keyed by image id.
         ground_truth: Annotated objects keyed by image id.
         iou_thresholds: IoU values averaged to produce mAP@50-95.
-        conf_threshold: Detections below this confidence are dropped first.
+        conf_threshold: Confidence threshold for the operating point.
+        ap_conf_threshold: Confidence floor for the average-precision curve.
         class_aware: Require a class match when pairing boxes.
 
     Returns:
@@ -139,12 +153,16 @@ def evaluate_detection(
         recall and F1, per-class metrics, and mAP@50 / mAP@50-95. Only classes
         that have ground truth contribute to the two mAP figures.
     """
-    filtered = {
+    operating = {
         image_id: prediction.filter_by_confidence(conf_threshold)
         for image_id, prediction in predictions.items()
     }
+    for_ap = {
+        image_id: prediction.filter_by_confidence(ap_conf_threshold)
+        for image_id, prediction in predictions.items()
+    }
 
-    predicted_classes = {d.class_id for p in filtered.values() for d in p.detections}
+    predicted_classes = {d.class_id for p in operating.values() for d in p.detections}
     all_classes = sorted(ground_truth.class_ids() | predicted_classes)
     thresholds = list(iou_thresholds)
 
@@ -158,26 +176,30 @@ def evaluate_detection(
             image_id: [o for o in image.objects if o.class_id == class_id]
             for image_id, image in ground_truth.images.items()
         }
-        class_detections = [
+        operating_detections = [
             (image_id, d)
-            for image_id, p in filtered.items()
+            for image_id, p in operating.items()
+            for d in p.detections
+            if d.class_id == class_id
+        ]
+        ap_detections = [
+            (image_id, d)
+            for image_id, p in for_ap.items()
             for d in p.detections
             if d.class_id == class_id
         ]
         num_gt = sum(len(objects) for objects in gt_by_image.values())
 
         tp, fp, fn = _operating_point(
-            class_detections, gt_by_image, OPERATING_IOU, class_aware
+            operating_detections, gt_by_image, OPERATING_IOU, class_aware
         )
         precision = _safe_ratio(tp, tp + fp)
         recall = _safe_ratio(tp, tp + fn)
         f1 = _safe_ratio(2 * precision * recall, precision + recall)
-        ap50 = _average_precision(
-            class_detections, gt_by_image, OPERATING_IOU, class_aware
-        )
+        ap50 = _average_precision(ap_detections, gt_by_image, OPERATING_IOU, class_aware)
         ap50_95 = (
             sum(
-                _average_precision(class_detections, gt_by_image, t, class_aware)
+                _average_precision(ap_detections, gt_by_image, t, class_aware)
                 for t in thresholds
             )
             / len(thresholds)
@@ -215,8 +237,9 @@ def evaluate_detection(
         map50=sum(ap50_values) / len(ap50_values) if ap50_values else 0.0,
         map50_95=sum(ap50_95_values) / len(ap50_95_values) if ap50_95_values else 0.0,
         num_ground_truth=ground_truth.total_objects(),
-        num_detections=sum(len(p.detections) for p in filtered.values()),
+        num_detections=sum(len(p.detections) for p in operating.values()),
         operating_confidence=conf_threshold,
+        ap_confidence=ap_conf_threshold,
         match_iou=OPERATING_IOU,
         iou_thresholds=thresholds,
         mean_inference_ms=(

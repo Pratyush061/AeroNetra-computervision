@@ -1,7 +1,7 @@
 """Unit tests for detection metrics (precision/recall and average precision)."""
 
 from aeronetra.detection.types import BoundingBox, Detection, ModelPrediction
-from aeronetra.evaluation.detection import evaluate_detection
+from aeronetra.evaluation.detection import DEFAULT_AP_CONFIDENCE, evaluate_detection
 from aeronetra.evaluation.types import GroundTruth, GroundTruthObject
 
 
@@ -91,3 +91,32 @@ def test_predicted_only_class_is_excluded_from_map():
     # Class 5 has no ground truth: it is reported per-class but not averaged.
     assert metrics.per_class[5].num_ground_truth == 0
     assert metrics.map50 == metrics.per_class[0].ap50
+
+
+def _single_car_ground_truth() -> GroundTruth:
+    ground_truth = GroundTruth()
+    ground_truth.add_image("a", [GroundTruthObject(0, BoundingBox(0, 0, 10, 10))])
+    return ground_truth
+
+
+def test_low_confidence_detection_contributes_to_map_not_operating_point():
+    # A correct car below the operating threshold still earns average precision
+    # (built at ap_conf_threshold) but not operating-point recall.
+    predictions = {"a": _prediction([_car((0, 0, 10, 10), conf=0.1)])}
+
+    metrics = evaluate_detection(predictions, _single_car_ground_truth())
+
+    assert metrics.num_detections == 0  # the operating point sees nothing
+    assert metrics.recall == 0.0
+    assert metrics.map50 == 1.0  # AP still credits the detection
+    assert metrics.ap_confidence == DEFAULT_AP_CONFIDENCE
+
+
+def test_ap_confidence_threshold_can_exclude_low_confidence():
+    predictions = {"a": _prediction([_car((0, 0, 10, 10), conf=0.1)])}
+
+    metrics = evaluate_detection(
+        predictions, _single_car_ground_truth(), ap_conf_threshold=0.25
+    )
+
+    assert metrics.map50 == 0.0

@@ -9,6 +9,7 @@ records.
 
 from aeronetra.evaluation.counting import evaluate_counting, predicted_counts
 from aeronetra.evaluation.detection import (
+    DEFAULT_AP_CONFIDENCE,
     DEFAULT_IOU_THRESHOLDS,
     OPERATING_IOU,
     evaluate_detection,
@@ -33,6 +34,7 @@ from aeronetra.evaluation.types import (
 )
 
 __all__ = [
+    "DEFAULT_AP_CONFIDENCE",
     "DEFAULT_IOU_THRESHOLDS",
     "OPERATING_IOU",
     "ClassMetrics",

@@ -47,3 +47,19 @@ def test_mape_uses_nonzero_actuals():
 
     assert metrics.mape == 100.0
     assert metrics.bias == 1.0
+
+
+def test_predicted_counts_filters_by_class():
+    predictions = {
+        "a": ModelPrediction(
+            detections=[
+                Detection(BoundingBox(0, 0, 1, 1), 0, "car", 0.9),
+                Detection(BoundingBox(0, 0, 1, 1), 1, "van", 0.9),
+                Detection(BoundingBox(0, 0, 1, 1), 5, "bus", 0.9),
+            ]
+        )
+    }
+
+    assert predicted_counts(predictions) == {"a": 3}
+    assert predicted_counts(predictions, class_ids={0, 1}) == {"a": 2}
+    assert predicted_counts(predictions, class_ids=[5]) == {"a": 1}

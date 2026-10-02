@@ -46,14 +46,18 @@ flowchart LR
 
 Matching follows the VOC/COCO rule: detections are taken highest-confidence first and each is paired with the best-IoU unmatched ground truth **of the same class** that clears the IoU threshold. Unpaired detections are false positives; unpaired annotations are false negatives.
 
-* **Precision / Recall / F1** are micro-averaged across classes at a single operating IoU (`0.5`), after the confidence threshold is applied.
+{% hint style="info" %}
+Two confidence thresholds are used deliberately. `ap_conf_threshold` (default `0.001`) builds the precision/recall curve, so mAP is not truncated by the operating point. `conf_threshold` (default `0.25`) defines the operating point reported as precision/recall/F1 and is the threshold counting uses.
+{% endhint %}
+
+* **Precision / Recall / F1** are micro-averaged across classes at a single operating IoU (`0.5`), after the operating-point confidence threshold is applied.
 * **AP@50** is the 101-point interpolated average precision at IoU 0.5.
 * **mAP@50** and **mAP@50-95** average AP over classes that have ground truth; classes that appear only in predictions are reported per-class but excluded from the mean.
 * **Inference latency** is averaged from each prediction's `inference_time_ms`.
 
 ## Counting metrics
 
-Image-level counting compares predicted counts against annotated counts. Images present on only one side are treated as a count of zero on the missing side, so a missed or spurious image is a real error rather than a silently dropped row.
+Image-level counting compares predicted counts against annotated counts. Images present on only one side are treated as a count of zero on the missing side, so a missed or spurious image is a real error rather than a silently dropped row. `predicted_counts()` accepts an optional `class_ids` filter, so counting can be restricted to designated vehicle classes without pre-filtering the predictions.
 
 | Metric | Meaning                                              |
 | ------ | ---------------------------------------------------- |
@@ -80,7 +84,7 @@ report = evaluate_all(predictions, ground_truth, metadata=metadata)
 save_report(report, outputs_dir / "metrics" / "yolov8_val.json")
 ```
 
-`predictions` is a `{image_id: ModelPrediction}` mapping produced by a detector adapter. Pass the same confidence threshold that the run used; the report records it.
+`predictions` is a `{image_id: ModelPrediction}` mapping produced by a detector adapter. Pass the same confidence threshold that the run used; the report records both the operating-point and AP thresholds.
 
 ## Rules
 

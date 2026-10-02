@@ -3,7 +3,7 @@
 from collections.abc import Mapping
 from pathlib import Path
 
-import cv2
+from PIL import Image
 
 from aeronetra.counting.ops import clip_box, convert_yolo_to_xyxy
 from aeronetra.datasets.visdrone import map_category, parse_visdrone_row
@@ -14,15 +14,20 @@ _IMAGE_SUFFIXES = (".jpg", ".jpeg", ".png")
 
 
 def image_sizes_from_dir(images_dir: Path) -> dict[str, tuple[int, int]]:
-    """Return ``{image_id: (width, height)}`` for the images in a directory."""
+    """Return ``{image_id: (width, height)}`` for the images in a directory.
+
+    Only image headers are read (via Pillow), so large evaluation sets do not
+    pay to decode full pixel data.
+    """
     sizes: dict[str, tuple[int, int]] = {}
     for path in sorted(images_dir.iterdir()):
         if path.suffix.lower() not in _IMAGE_SUFFIXES:
             continue
-        image = cv2.imread(str(path))
-        if image is None:
+        try:
+            with Image.open(path) as image:
+                width, height = image.size
+        except OSError:
             continue
-        height, width = image.shape[:2]
         sizes[path.stem] = (width, height)
     return sizes
 

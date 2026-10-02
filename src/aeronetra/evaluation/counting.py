@@ -1,24 +1,32 @@
 """Count-error metrics for image-level vehicle counting."""
 
 import math
+from collections.abc import Sequence
 
 from aeronetra.detection.types import ModelPrediction
 from aeronetra.evaluation.types import CountMetrics, ImageCountError
 
 
 def predicted_counts(
-    predictions: dict[str, ModelPrediction], conf_threshold: float = 0.0
+    predictions: dict[str, ModelPrediction],
+    conf_threshold: float = 0.0,
+    class_ids: Sequence[int] | set[int] | None = None,
 ) -> dict[str, int]:
     """Return the number of surviving detections per image.
 
     Args:
         predictions: Standardised predictions keyed by image id.
         conf_threshold: Detections below this confidence are dropped first.
+        class_ids: If given, count only these class ids (e.g. the vehicle
+            classes), so callers need not pre-filter their predictions.
     """
-    return {
-        image_id: len(prediction.filter_by_confidence(conf_threshold).detections)
-        for image_id, prediction in predictions.items()
-    }
+    counts: dict[str, int] = {}
+    for image_id, prediction in predictions.items():
+        filtered = prediction.filter_by_confidence(conf_threshold)
+        if class_ids is not None:
+            filtered = filtered.filter_by_class(sorted(set(class_ids)))
+        counts[image_id] = len(filtered.detections)
+    return counts
 
 
 def evaluate_counting(predicted: dict[str, int], actual: dict[str, int]) -> CountMetrics:
