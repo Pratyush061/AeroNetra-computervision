@@ -47,11 +47,12 @@ Always run the validator before training.
 | Area                      | Current status                  |
 | ------------------------- | ------------------------------- |
 | UAVDT parser              | Stub / not implemented          |
-| Evaluation package        | Incomplete                      |
 | Generic utilities package | Minimal/incomplete              |
 | Experiment configs        | Not fully populated             |
 | Model-specific configs    | Not fully populated             |
 | Tracking                  | Not implemented in core Phase 1 |
+
+The **evaluation package** (`src/aeronetra/evaluation/`) is implemented and unit-tested: it provides IoU matching, precision/recall/F1, mAP@50 and mAP@50-95, and count-error metrics (MAE/RMSE/bias/MAPE). Its metrics are only as trustworthy as the ground truth and thresholds recorded alongside them — always store the `InferenceMetadata` with a report.
 
 {% hint style="warning" %}
 Do not turn planned modules into documentation claims. A documented roadmap item is not an implemented feature.
