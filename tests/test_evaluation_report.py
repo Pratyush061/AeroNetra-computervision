@@ -27,6 +27,32 @@ def test_evaluate_all_combines_detection_and_counting():
     assert report.metadata is None
 
 
+def test_count_class_filter_applies_to_ground_truth_and_predictions():
+    ground_truth = GroundTruth()
+    ground_truth.add_image(
+        "a",
+        [
+            GroundTruthObject(0, BoundingBox(0, 0, 10, 10)),
+            GroundTruthObject(1, BoundingBox(20, 20, 30, 30)),
+        ],
+    )
+    predictions = {
+        "a": ModelPrediction(
+            [
+                Detection(BoundingBox(0, 0, 10, 10), 0, "car", 0.9),
+                Detection(BoundingBox(20, 20, 30, 30), 1, "van", 0.9),
+            ]
+        )
+    }
+
+    report = evaluate_all(predictions, ground_truth, count_class_ids={0})
+
+    assert report.detection.num_ground_truth == 2
+    assert report.counting.total_predicted == 1
+    assert report.counting.total_actual == 1
+    assert report.counting.mae == 0.0
+
+
 def test_save_report_writes_json(tmp_path):
     predictions, ground_truth = _inputs()
     report = evaluate_all(predictions, ground_truth)

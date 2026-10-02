@@ -146,13 +146,21 @@ def evaluate_detection(
         iou_thresholds: IoU values averaged to produce mAP@50-95.
         conf_threshold: Confidence threshold for the operating point.
         ap_conf_threshold: Confidence floor for the average-precision curve.
-        class_aware: Require a class match when pairing boxes.
+        class_aware: Must remain true because the returned metrics are aggregated
+            per class; class-agnostic aggregation would require a different report
+            schema.
 
     Returns:
         A :class:`DetectionMetrics` holding the operating-point precision,
         recall and F1, per-class metrics, and mAP@50 / mAP@50-95. Only classes
         that have ground truth contribute to the two mAP figures.
     """
+    if not class_aware:
+        raise ValueError(
+            "evaluate_detection only supports class-aware evaluation; "
+            "class_agnostic aggregation requires a different metric schema"
+        )
+
     operating = {
         image_id: prediction.filter_by_confidence(conf_threshold)
         for image_id, prediction in predictions.items()

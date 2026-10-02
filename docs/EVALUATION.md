@@ -33,8 +33,8 @@ flowchart LR
 
 ## What each module does
 
-| Module                  | Responsibility                                                        |
-| ----------------------- | --------------------------------------------------------------------- |
+| Module                    | Responsibility                                                        |
+| ------------------------- | --------------------------------------------------------------------- |
 | `evaluation/matching.py`  | `iou()` and greedy, class-aware `match_image()`                       |
 | `evaluation/detection.py` | `evaluate_detection()` — precision/recall/F1 and mAP@50 / mAP@50-95   |
 | `evaluation/counting.py`  | `evaluate_counting()` — MAE, RMSE, bias, MAPE against true counts     |
@@ -57,7 +57,7 @@ Two confidence thresholds are used deliberately. `ap_conf_threshold` (default `0
 
 ## Counting metrics
 
-Image-level counting compares predicted counts against annotated counts. Images present on only one side are treated as a count of zero on the missing side, so a missed or spurious image is a real error rather than a silently dropped row. `predicted_counts()` accepts an optional `class_ids` filter, so counting can be restricted to designated vehicle classes without pre-filtering the predictions.
+Image-level counting compares predicted counts against annotated counts. Images present on only one side are treated as a count of zero on the missing side, so a missed or spurious image is a real error rather than a silently dropped row. `predicted_counts()` accepts an optional `class_ids` filter. When a class filter is supplied through `evaluate_all(count_class_ids=...)`, the same filter is applied to ground-truth counts so both sides use the same object subset.
 
 | Metric | Meaning                                              |
 | ------ | ---------------------------------------------------- |
@@ -65,6 +65,10 @@ Image-level counting compares predicted counts against annotated counts. Images 
 | RMSE   | Root-mean-square error (penalises large misses)      |
 | Bias   | Mean signed error; positive means over-counting      |
 | MAPE   | Mean absolute percentage error over non-zero counts  |
+
+## Ground-truth scope
+
+The YOLO loader follows the dataset convention that an image with no objects may have no label file, so missing YOLO label files are treated as having no ground-truth objects when they are outside the loader's file set. For VisDrone, `load_visdrone_ground_truth()` is a vehicle-only normalization helper; it is **not** a drop-in replacement for the official VisDrone challenge evaluator. The official toolkit additionally models ignored ground-truth regions and ground-truth rows with score `0` as ignored, so use the official toolkit when challenge-comparable VisDrone scores are required.
 
 ## Usage
 
@@ -93,3 +97,4 @@ save_report(report, outputs_dir / "metrics" / "yolov8_val.json")
 * Do not average mAP over classes with no ground truth.
 * Do not apply YOLO-style NMS to RT-DETR output before evaluating.
 * Store the `InferenceMetadata` with every report; a metric without its dataset, weights, thresholds and device is not reproducible.
+* Treat this package as the project's reproducible metric layer, not as a substitute for dataset-specific official benchmark toolkits.

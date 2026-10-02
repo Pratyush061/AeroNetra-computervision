@@ -31,8 +31,9 @@ def evaluate_all(
     precision uses ``ap_conf_threshold`` instead, so mAP is not truncated.
 
     Args:
-        count_class_ids: If given, restrict counting to these class ids. The
-            detection metrics are unaffected and stay over all classes.
+        count_class_ids: If given, restrict counting to these class ids on both
+            predictions and ground truth, so the reported count errors compare
+            like-for-like object sets. Detection metrics are unaffected.
     """
     detection = evaluate_detection(
         predictions,
@@ -44,7 +45,7 @@ def evaluate_all(
     )
     counting = evaluate_counting(
         predicted_counts(predictions, conf_threshold, count_class_ids),
-        ground_truth.counts_by_image(),
+        ground_truth.counts_by_image(count_class_ids),
     )
     return EvaluationReport(detection=detection, counting=counting, metadata=metadata)
 
