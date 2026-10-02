@@ -20,7 +20,7 @@ from aeronetra.evaluation.groundtruth import (
     load_visdrone_ground_truth,
     load_yolo_ground_truth,
 )
-from aeronetra.evaluation.matching import iou, match_image
+from aeronetra.evaluation.matching import filter_ignored_detections, iou, match_image
 from aeronetra.evaluation.report import evaluate_all, save_report
 from aeronetra.evaluation.strata import (
     DEFAULT_DENSITY_BOUNDS,
@@ -69,6 +69,7 @@ __all__ = [
     "evaluate_by_stratum",
     "evaluate_counting",
     "evaluate_detection",
+    "filter_ignored_detections",
     "image_sizes_from_dir",
     "iou",
     "load_visdrone_ground_truth",

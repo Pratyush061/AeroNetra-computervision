@@ -16,7 +16,7 @@ from collections.abc import Sequence
 
 from aeronetra.detection.types import BoundingBox, ModelPrediction
 from aeronetra.evaluation.detection import OPERATING_IOU, _safe_ratio
-from aeronetra.evaluation.matching import match_image
+from aeronetra.evaluation.matching import filter_ignored_detections, match_image
 from aeronetra.evaluation.types import GroundTruth, StratifiedMetrics, StratumMetrics
 
 # ``_safe_ratio`` is imported from ``detection`` rather than redefined here, so
@@ -181,6 +181,10 @@ def evaluate_by_stratum(
         gt_objects = gt_image.objects if gt_image is not None else []
         prediction = operating.get(image_id)
         detections = prediction.detections if prediction is not None else []
+        if gt_image is not None:
+            # Drop detections in ignored regions so the strata reconcile with
+            # the aggregate metrics, which apply the same suppression.
+            detections = filter_ignored_detections(detections, gt_image.ignore_boxes())
 
         outcome = match_image(detections, gt_objects, OPERATING_IOU, class_aware)
         density_label = density_stratum(len(gt_objects), density_bounds)

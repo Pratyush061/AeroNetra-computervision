@@ -83,6 +83,9 @@ def load_visdrone_ground_truth(
 
     Only vehicle categories are kept; class ids follow the same mapping as the
     VisDrone converter (:func:`aeronetra.datasets.visdrone.map_category`).
+    Ignored regions (category ``0``) and rows with score ``0`` are collected
+    separately so the evaluator can exclude detections that fall inside them,
+    matching the VisDrone protocol for those two cases.
 
     Args:
         labels_dir: Directory of VisDrone ``<image_id>.txt`` annotation files.
@@ -90,7 +93,8 @@ def load_visdrone_ground_truth(
         mode: ``"merged"`` (all vehicles → class 0) or ``"separate"``.
 
     Returns:
-        A :class:`GroundTruth` containing only valid, non-empty vehicle boxes.
+        A :class:`GroundTruth` whose ``objects`` are valid, non-empty vehicle
+        boxes and whose ``ignored`` are the regions excluded from evaluation.
     """
     ground_truth = GroundTruth()
     for label_path in sorted(labels_dir.glob("*.txt")):
@@ -99,12 +103,10 @@ def load_visdrone_ground_truth(
             continue
         width, height = size
         objects: list[GroundTruthObject] = []
+        ignored: list[GroundTruthObject] = []
         for row in label_path.read_text(encoding="utf-8").splitlines():
             parsed = parse_visdrone_row(row)
             if not parsed:
-                continue
-            class_id = map_category(parsed["category"], mode)
-            if class_id is None:
                 continue
             left, top = parsed["left"], parsed["top"]
             try:
@@ -115,7 +117,19 @@ def load_visdrone_ground_truth(
                 )
             except ValueError:
                 continue
-            if box.area > 0:
-                objects.append(GroundTruthObject(class_id, box))
-        ground_truth.add_image(label_path.stem, objects)
+            if box.area <= 0:
+                continue
+            class_id = map_category(parsed["category"], mode)
+            # Ignored regions (category 0) and score-0 rows are excluded from
+            # evaluation rather than dropped, so detections inside them are not
+            # counted as false positives. Non-vehicle categories are dropped.
+            if parsed["category"] == 0 or parsed["score"] == 0:
+                ignored.append(
+                    GroundTruthObject(class_id if class_id is not None else 0, box)
+                )
+                continue
+            if class_id is None:
+                continue
+            objects.append(GroundTruthObject(class_id, box))
+        ground_truth.add_image(label_path.stem, objects, ignored)
     return ground_truth

@@ -21,10 +21,23 @@ class GroundTruthObject:
 
 @dataclass
 class GroundTruthImage:
-    """All annotated objects for one image."""
+    """All annotations for one image.
+
+    ``objects`` holds the objects that count toward metrics. ``ignored`` holds
+    regions the dataset marks as not-to-be-evaluated (VisDrone ignored regions
+    and rows with score ``0``): a detection falling inside one is neither a true
+    positive nor a false positive, and an ignored region is never a false
+    negative. Keeping them in a separate list means counting and per-class
+    logic over ``objects`` stays correct without every caller re-filtering.
+    """
 
     image_id: str
     objects: list[GroundTruthObject] = field(default_factory=list)
+    ignored: list[GroundTruthObject] = field(default_factory=list)
+
+    def ignore_boxes(self) -> list[BoundingBox]:
+        """Return the boxes of the ignored regions for this image."""
+        return [obj.box for obj in self.ignored]
 
 
 @dataclass
@@ -33,9 +46,20 @@ class GroundTruth:
 
     images: dict[str, GroundTruthImage] = field(default_factory=dict)
 
-    def add_image(self, image_id: str, objects: list[GroundTruthObject]) -> None:
-        """Add or replace the annotations for ``image_id``."""
-        self.images[image_id] = GroundTruthImage(image_id, objects)
+    def add_image(
+        self,
+        image_id: str,
+        objects: list[GroundTruthObject],
+        ignored: list[GroundTruthObject] | None = None,
+    ) -> None:
+        """Add or replace the annotations for ``image_id``.
+
+        Args:
+            objects: Objects that count toward metrics.
+            ignored: Regions excluded from evaluation (see
+                :class:`GroundTruthImage`). Defaults to none.
+        """
+        self.images[image_id] = GroundTruthImage(image_id, objects, ignored or [])
 
     def class_ids(self) -> set[int]:
         """Return the set of class ids that appear in the annotations."""

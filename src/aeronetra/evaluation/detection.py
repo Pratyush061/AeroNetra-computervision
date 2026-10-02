@@ -4,7 +4,7 @@ import bisect
 from collections.abc import Sequence
 
 from aeronetra.detection.types import Detection, ModelPrediction
-from aeronetra.evaluation.matching import match_image
+from aeronetra.evaluation.matching import filter_ignored_detections, match_image
 from aeronetra.evaluation.types import (
     ClassMetrics,
     DetectionMetrics,
@@ -161,14 +161,30 @@ def evaluate_detection(
             "class_agnostic aggregation requires a different metric schema"
         )
 
-    operating = {
-        image_id: prediction.filter_by_confidence(conf_threshold)
-        for image_id, prediction in predictions.items()
+    ignore_boxes = {
+        image_id: image.ignore_boxes()
+        for image_id, image in ground_truth.images.items()
+        if image.ignored
     }
-    for_ap = {
-        image_id: prediction.filter_by_confidence(ap_conf_threshold)
-        for image_id, prediction in predictions.items()
-    }
+
+    def _prepare(threshold: float) -> dict[str, ModelPrediction]:
+        """Confidence-filter predictions and drop detections in ignored regions."""
+        prepared: dict[str, ModelPrediction] = {}
+        for image_id, prediction in predictions.items():
+            filtered = prediction.filter_by_confidence(threshold)
+            boxes = ignore_boxes.get(image_id)
+            if boxes:
+                filtered = ModelPrediction(
+                    detections=filter_ignored_detections(filtered.detections, boxes),
+                    image_width=filtered.image_width,
+                    image_height=filtered.image_height,
+                    inference_time_ms=filtered.inference_time_ms,
+                )
+            prepared[image_id] = filtered
+        return prepared
+
+    operating = _prepare(conf_threshold)
+    for_ap = _prepare(ap_conf_threshold)
 
     predicted_classes = {d.class_id for p in operating.values() for d in p.detections}
     all_classes = sorted(ground_truth.class_ids() | predicted_classes)

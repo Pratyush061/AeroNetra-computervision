@@ -1,5 +1,7 @@
 """IoU computation and greedy detection-to-ground-truth matching."""
 
+from collections.abc import Sequence
+
 from aeronetra.detection.types import BoundingBox, Detection
 from aeronetra.evaluation.types import GroundTruthObject, MatchOutcome
 
@@ -13,6 +15,39 @@ def iou(a: BoundingBox, b: BoundingBox) -> float:
     intersection = inter_w * inter_h
     union = a.area + b.area - intersection
     return intersection / union if union > 0.0 else 0.0
+
+
+def filter_ignored_detections(
+    detections: list[Detection], ignore_boxes: Sequence[BoundingBox]
+) -> list[Detection]:
+    """Drop detections that fall inside an ignored region.
+
+    A detection whose centre lies in an ignored region is excluded from
+    evaluation entirely — neither a true nor a false positive — following the
+    VisDrone convention that detections in ignored regions are not scored.
+    Centre containment is used rather than IoU because aerial ignore regions are
+    large: a small vehicle box inside one has a low IoU with it, so an IoU test
+    would miss it. Complexity is O(D * R).
+
+    Args:
+        detections: Detections for a single image.
+        ignore_boxes: Ignored-region boxes for the same image.
+
+    Returns:
+        The detections that are not inside any ignored region.
+    """
+    if not ignore_boxes:
+        return detections
+    kept: list[Detection] = []
+    for detection in detections:
+        cx, cy = detection.box.center
+        if any(
+            region.xmin <= cx <= region.xmax and region.ymin <= cy <= region.ymax
+            for region in ignore_boxes
+        ):
+            continue
+        kept.append(detection)
+    return kept
 
 
 def match_image(
