@@ -84,7 +84,7 @@ Use `export_to_json()` and `export_to_csv()` from `src/aeronetra/counting/drawin
 
 ## Best Practices
 
-1. **Deterministic seeds.** Set random seeds for reproducibility. Record the seed in `InferenceMetadata`.
+1. **Deterministic seeds.** Call `set_seed(seed)` from `aeronetra.utils` at the start of a run, and record the same seed in `InferenceMetadata`.
 2. **Never fabricate results.** Only record actually measured values. Clearly mark unexecuted experiments.
 3. **Threshold tuning.** Tune confidence thresholds per model on a hold-out set before comparing final counts.
 4. **Max detections awareness.** The `max_detections: 300` ceiling can cap counts in dense aerial scenes — note this when analyzing results. See [MODEL_COMPARISON.md](MODEL_COMPARISON.md) for details.

@@ -10,6 +10,8 @@ from pathlib import Path
 
 import cv2
 
+from aeronetra.utils.paths import ensure_dir
+
 logger = logging.getLogger(__name__)
 
 # Original VisDrone Classes:
@@ -136,8 +138,8 @@ def convert_dataset(images_dir: Path, labels_dir: Path, output_dir: Path, mode: 
     out_labels_dir = output_dir / "labels"
 
     if not dry_run:
-        out_images_dir.mkdir(parents=True, exist_ok=True)
-        out_labels_dir.mkdir(parents=True, exist_ok=True)
+        ensure_dir(out_images_dir)
+        ensure_dir(out_labels_dir)
 
     # Deterministic sorting
     image_paths = sorted(images_dir.glob("*.jpg"))
