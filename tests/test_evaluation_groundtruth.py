@@ -56,6 +56,30 @@ def test_load_visdrone_ground_truth_keeps_only_valid_vehicles(tmp_path):
     assert objects[0].box.xyxy == (10.0, 10.0, 30.0, 30.0)
 
 
+def test_load_visdrone_ground_truth_separates_ignored_regions(tmp_path):
+    labels_dir = tmp_path / "labels"
+    labels_dir.mkdir()
+    # a real car (category 4, score 1), an ignored region (category 0), and a
+    # score-0 car row that the protocol excludes from evaluation.
+    (labels_dir / "img1.txt").write_text(
+        "10,10,20,20,1,4,0,0\n"
+        "0,0,50,50,0,0,0,0\n"
+        "300,300,20,20,0,4,0,0\n",
+        encoding="utf-8",
+    )
+
+    ground_truth = load_visdrone_ground_truth(
+        labels_dir, {"img1": (1000, 1000)}, mode="merged"
+    )
+    image = ground_truth.images["img1"]
+
+    assert len(image.objects) == 1
+    assert image.objects[0].box.xyxy == (10.0, 10.0, 30.0, 30.0)
+    assert len(image.ignored) == 2
+    assert ground_truth.total_objects() == 1
+    assert len(image.ignore_boxes()) == 2
+
+
 def test_image_sizes_from_dir():
     sizes = image_sizes_from_dir(FIXTURES / "images")
 

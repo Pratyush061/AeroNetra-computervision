@@ -45,7 +45,7 @@ flowchart LR
 
 ## Detection metrics
 
-Matching follows the VOC/COCO rule: detections are taken highest-confidence first and each is paired with the best-IoU unmatched ground truth **of the same class** that clears the IoU threshold. Unpaired detections are false positives; unpaired annotations are false negatives.
+Matching follows the VOC/COCO rule: detections are taken highest-confidence first and each is paired with the best-IoU unmatched ground truth **of the same class** that clears the IoU threshold. Unpaired detections are false positives; unpaired annotations are false negatives. Detections whose centre falls inside a VisDrone ignored region are excluded from both counts (see [Ground-truth scope](#ground-truth-scope)).
 
 {% hint style="info" %}
 Two confidence thresholds are used deliberately. `ap_conf_threshold` (default `0.001`) builds the precision/recall curve, so mAP is not truncated by the operating point. `conf_threshold` (default `0.25`) defines the operating point reported as precision/recall/F1 and is the threshold counting uses.
@@ -82,7 +82,11 @@ Image-level counting compares predicted counts against annotated counts. Images 
 
 ## Ground-truth scope
 
-The YOLO loader follows the dataset convention that an image with no objects may have no label file, so missing YOLO label files are treated as having no ground-truth objects when they are outside the loader's file set. For VisDrone, `load_visdrone_ground_truth()` is a vehicle-only normalization helper; it is **not** a drop-in replacement for the official VisDrone challenge evaluator. The official toolkit additionally models ignored ground-truth regions and ground-truth rows with score `0` as ignored, so use the official toolkit when challenge-comparable VisDrone scores are required.
+The YOLO loader follows the dataset convention that an image with no objects may have no label file, so missing YOLO label files are treated as having no ground-truth objects when they are outside the loader's file set. For VisDrone, `load_visdrone_ground_truth()` keeps only vehicle categories and models the two ignore rules that change the score: ignored regions (category `0`) and ground-truth rows with score `0` are collected on each image's `ignored` list, and any detection whose centre falls inside one is excluded from evaluation — neither a true nor a false positive — while an ignored region is never a false negative. This aligns the most impactful VisDrone conventions with the official protocol.
+
+{% hint style="warning" %}
+This is still a focused metric layer, not the full official VisDrone toolkit. The DET truncation field is coarse (0 or 1, i.e. 0% or 1–50%), so the official "exclude instances truncated beyond 50%" rule is not representable from the annotation file, and the `others` category is not scored. Use the official toolkit when an exact challenge-comparable leaderboard score is required.
+{% endhint %}
 
 ## Usage
 

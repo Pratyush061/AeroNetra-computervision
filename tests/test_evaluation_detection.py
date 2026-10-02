@@ -131,3 +131,26 @@ def test_class_agnostic_mode_is_rejected_instead_of_returning_misleading_metrics
             _single_car_ground_truth(),
             class_aware=False,
         )
+
+
+def test_detections_inside_ignored_regions_are_not_false_positives():
+    ground_truth = GroundTruth()
+    ground_truth.add_image(
+        "a",
+        [GroundTruthObject(0, BoundingBox(0, 0, 10, 10))],
+        [GroundTruthObject(0, BoundingBox(500, 500, 600, 600))],
+    )
+    predictions = {
+        "a": _prediction(
+            [
+                _car((0, 0, 10, 10)),  # true positive
+                _car((510, 510, 530, 530)),  # centred in the ignored region
+            ]
+        )
+    }
+
+    metrics = evaluate_detection(predictions, ground_truth, conf_threshold=0.25)
+
+    assert metrics.num_detections == 1
+    assert metrics.precision == 1.0
+    assert metrics.recall == 1.0

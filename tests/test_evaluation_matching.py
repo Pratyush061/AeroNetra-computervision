@@ -1,7 +1,7 @@
 """Unit tests for IoU and detection-to-ground-truth matching."""
 
 from aeronetra.detection.types import BoundingBox, Detection
-from aeronetra.evaluation.matching import iou, match_image
+from aeronetra.evaluation.matching import filter_ignored_detections, iou, match_image
 from aeronetra.evaluation.types import GroundTruthObject
 
 
@@ -47,3 +47,17 @@ def test_match_image_threshold_boundary():
 
     assert match_image([det], ground_truth, 0.5).matched == [(0, 0)]
     assert match_image([det], ground_truth, 0.6).matched == []
+
+
+def test_filter_ignored_detections_drops_detections_centred_in_a_region():
+    region = BoundingBox(100, 100, 300, 300)
+    inside = Detection(BoundingBox(150, 150, 170, 170), 0, "car", 0.9)
+    outside = Detection(BoundingBox(400, 400, 420, 420), 0, "car", 0.9)
+
+    assert filter_ignored_detections([inside, outside], [region]) == [outside]
+
+
+def test_filter_ignored_detections_is_a_noop_without_regions():
+    det = Detection(BoundingBox(0, 0, 10, 10), 0, "car", 0.9)
+
+    assert filter_ignored_detections([det], []) == [det]
