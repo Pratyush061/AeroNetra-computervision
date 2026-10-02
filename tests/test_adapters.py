@@ -5,7 +5,11 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from aeronetra.detection.adapters import UltralyticsAdapter, get_model_adapter
+from aeronetra.detection.adapters import (
+    OnnxRuntimeAdapter,
+    UltralyticsAdapter,
+    get_model_adapter,
+)
 
 
 class _TensorLike:
@@ -65,5 +69,96 @@ def test_unsupported_model_raises():
 
 def test_predict_before_load_raises():
     adapter = get_model_adapter("YOLOv8", "yolov8n.pt", {0: "vehicle"})
+    with pytest.raises(RuntimeError, match="Model not loaded"):
+        adapter.predict(np.zeros((10, 10, 3), dtype=np.uint8))
+
+
+class _FakeOnnxSession:
+    """Stand-in for an ONNX Runtime session that returns a canned output."""
+
+    def __init__(self, output):
+        self._output = output
+
+    def run(self, *_args, **_kwargs):
+        return [self._output]
+
+
+def _onnx_adapter(output, class_names):
+    adapter = OnnxRuntimeAdapter(
+        "yolov8n.onnx", "model.onnx", class_names, input_size=(640, 640)
+    )
+    adapter.session = _FakeOnnxSession(output)
+    adapter.input_name = "images"
+    return adapter
+
+
+def test_factory_builds_onnx_adapter_for_onnx_names():
+    adapter = get_model_adapter("yolov8n.onnx", "m.onnx", {0: "vehicle"})
+
+    assert isinstance(adapter, OnnxRuntimeAdapter)
+
+
+def test_onnx_predict_parses_raw_channel_first_layout():
+    # (1, 4+nc, N) with nc=1: rows are cx, cy, w, h, score for two anchors.
+    output = np.array(
+        [
+            [320.0, 100.0],
+            [320.0, 100.0],
+            [40.0, 20.0],
+            [40.0, 20.0],
+            [0.9, 0.1],  # second anchor is below the confidence threshold
+        ]
+    )[np.newaxis]
+    adapter = _onnx_adapter(output, {0: "vehicle"})
+
+    prediction = adapter.predict(np.zeros((640, 640, 3), dtype=np.uint8))
+
+    assert len(prediction.detections) == 1
+    det = prediction.detections[0]
+    assert det.box.xyxy == (300.0, 300.0, 340.0, 340.0)
+    assert det.confidence == pytest.approx(0.9)
+    assert (det.class_id, det.class_name) == (0, "vehicle")
+
+
+def test_onnx_predict_applies_nms_to_raw_layout():
+    # Two identical, heavily overlapping same-class anchors collapse to one.
+    output = np.array(
+        [
+            [150.0, 150.0],
+            [150.0, 150.0],
+            [100.0, 100.0],
+            [100.0, 100.0],
+            [0.9, 0.8],
+        ]
+    )[np.newaxis]
+    adapter = _onnx_adapter(output, {0: "vehicle"})
+
+    prediction = adapter.predict(np.zeros((640, 640, 3), dtype=np.uint8))
+
+    assert len(prediction.detections) == 1
+    assert prediction.detections[0].confidence == pytest.approx(0.9)
+
+
+def test_onnx_predict_parses_end_to_end_layout_without_nms():
+    # (1, N, 6): x1, y1, x2, y2, conf, class — already suppressed, so two
+    # overlapping boxes are both kept.
+    output = np.array(
+        [
+            [
+                [100.0, 100.0, 200.0, 200.0, 0.9, 0.0],
+                [105.0, 105.0, 205.0, 205.0, 0.8, 0.0],
+            ]
+        ]
+    )
+    adapter = _onnx_adapter(output, {0: "vehicle"})
+
+    prediction = adapter.predict(np.zeros((640, 640, 3), dtype=np.uint8))
+
+    assert len(prediction.detections) == 2
+
+
+def test_onnx_predict_before_load_raises():
+    adapter = get_model_adapter("onnx", "m.onnx", {0: "vehicle"})
+
     with pytest.raises(RuntimeError, match="Model not loaded"):
         adapter.predict(np.zeros((10, 10, 3), dtype=np.uint8))

@@ -17,7 +17,7 @@ Model-specific behaviour is confined to detector *adapters*. Everything downstre
 
 ## 🌟 Highlights
 
-- **One interface, many detectors.** `get_model_adapter(...)` returns a uniform adapter for YOLOv8, YOLO11, and RT-DETR, so swapping models never changes downstream code.
+- **One interface, many detectors.** `get_model_adapter(...)` returns a uniform adapter for YOLOv8, YOLO11, RT-DETR, and ONNX Runtime, so swapping models never changes downstream code.
 - **Standardized predictions.** Every backend is normalized into `ModelPrediction` / `Detection` / `BoundingBox`, so counting and visualization never touch raw framework output.
 - **A real dataset pipeline.** VisDrone is parsed, validated, and converted to YOLO format in either `merged` (single `vehicle` class) or `separate` (per-type) modes.
 - **Counting + export built in.** Confidence/class/area/aspect/ROI filtering, OpenCV-based drawing, and JSON/CSV export ship as reusable library functions.
@@ -43,7 +43,7 @@ The current research phase is **Phase 1: static-image detection and counting**. 
 
 ### ✅ What is implemented
 
-- **Detection** — `UltralyticsAdapter` covering the YOLO family (YOLOv8, YOLO11) and RT-DETR, plus the `BaseDetector` abstract interface and a factory function.
+- **Detection** — `UltralyticsAdapter` covering the YOLO family (YOLOv8, YOLO11) and RT-DETR, plus `OnnxRuntimeAdapter` for exported ONNX models, behind the shared `BaseDetector` abstract interface and a factory function.
 - **Counting** — coordinate conversion, clipping, area/aspect-ratio/ROI filtering, NMS, and image-level counting, with drawing and JSON/CSV export.
 - **Datasets** — a VisDrone parser, class mapping, and YOLO-format converter, with fixtures and unit tests.
 - **UAVDT** — a sequence-based DET parser, class mapping and YOLO converter, implemented from the documented UAVDT format (not yet verified against a real download).
@@ -105,7 +105,7 @@ AeroNetra-computervision/
 
 | Module | What it does |
 | --- | --- |
-| `detection/adapters.py` | `BaseDetector` ABC, `UltralyticsAdapter`, and the `get_model_adapter()` factory |
+| `detection/adapters.py` | `BaseDetector` ABC, `UltralyticsAdapter`, `OnnxRuntimeAdapter`, and the `get_model_adapter()` factory |
 | `detection/types.py` | `BoundingBox`, `Detection`, `ModelPrediction`, `CountSummary`, `InferenceMetadata` |
 | `counting/ops.py` | Coordinate conversion, clipping, area/aspect/ROI filtering, NMS, `count_vehicles()` |
 | `counting/drawing.py` | Draw boxes/ROI/summary and export detections to JSON/CSV |
