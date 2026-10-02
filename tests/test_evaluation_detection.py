@@ -115,7 +115,7 @@ def test_low_confidence_detection_contributes_to_map_not_operating_point():
 
 
 def test_ap_confidence_threshold_can_exclude_low_confidence():
-    predictions = {"a": _prediction([_car((0, 0, 10, 10), conf=0.1)])
+    predictions = {"a": _prediction([_car((0, 0, 10, 10), conf=0.1)])}
 
     metrics = evaluate_detection(
         predictions, _single_car_ground_truth(), ap_conf_threshold=0.25
