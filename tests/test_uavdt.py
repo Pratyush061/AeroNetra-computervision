@@ -48,6 +48,12 @@ def test_map_category():
     assert map_category(9, "separate") is None
 
 
+def test_map_category_rejects_unknown_mode():
+    # A typo must fail loudly rather than silently dropping every annotation.
+    with pytest.raises(ValueError, match="Unsupported mode"):
+        map_category(1, "seperate")
+
+
 def test_uavdt_vehicle_class_ids():
     assert UAVDT_VEHICLE_CLASSES == {1: "car", 2: "truck", 3: "bus"}
 

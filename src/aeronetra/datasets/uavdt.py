@@ -31,6 +31,7 @@ from PIL import Image
 
 from aeronetra.counting.ops import clip_box
 from aeronetra.detection.types import BoundingBox
+from aeronetra.utils.paths import ensure_dir
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +60,7 @@ _ROW_KEYS = (
 )
 
 _SEPARATE_MAP = {1: 0, 2: 1, 3: 2}
+_VALID_MODES = ("merged", "separate")
 
 
 def parse_uavdt_row(row_str: str) -> dict[str, int] | None:
@@ -90,14 +92,18 @@ def map_category(category: int, mode: str = "separate") -> int | None:
 
     Returns:
         The YOLO class id, or ``None`` if the category is not a vehicle.
+
+    Raises:
+        ValueError: If ``mode`` is not ``"merged"`` or ``"separate"``. Failing
+            loudly here prevents a typo from silently dropping every annotation.
     """
+    if mode not in _VALID_MODES:
+        raise ValueError(f"Unsupported mode: {mode!r}. Expected 'merged' or 'separate'.")
     if category not in UAVDT_VEHICLE_CLASSES:
         return None
     if mode == "merged":
         return 0
-    if mode == "separate":
-        return _SEPARATE_MAP[category]
-    return None
+    return _SEPARATE_MAP[category]
 
 
 def convert_to_yolo_format(
@@ -171,9 +177,8 @@ def convert_uavdt_dataset(
     out_images_dir = output_dir / "images"
     out_labels_dir = output_dir / "labels"
     if not dry_run:
-        # NOTE: once the utils package lands, this can use aeronetra.utils.paths.ensure_dir.
-        out_images_dir.mkdir(parents=True, exist_ok=True)
-        out_labels_dir.mkdir(parents=True, exist_ok=True)
+        ensure_dir(out_images_dir)
+        ensure_dir(out_labels_dir)
 
     for gt_path in sorted(gt_dir.glob(f"*{_GT_SUFFIX}")):
         sequence = gt_path.name[: -len(_GT_SUFFIX)]

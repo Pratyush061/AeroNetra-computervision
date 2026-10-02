@@ -174,3 +174,15 @@ Avoid:
 * hardcoded local filesystem paths
 * direct model-specific logic scattered across notebooks
 * applying YOLO-specific post-processing blindly to RT-DETR
+
+## 9. Shared utilities
+
+`src/aeronetra/utils/` holds small helpers used across the pipeline and by notebooks/scripts:
+
+| Helper | Purpose |
+| --- | --- |
+| `set_seed(seed)` | Seed Python, NumPy and (when installed) torch for reproducibility |
+| `ensure_dir(path)` | Create a directory and its parents idempotently |
+| `configure_logging(level)` | Set the root logger format and level |
+
+Prefer these over ad-hoc equivalents (`random.seed`, raw `mkdir`, `logging.basicConfig`), and add a new helper only when at least two call sites need it.
