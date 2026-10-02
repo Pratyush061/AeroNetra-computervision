@@ -46,11 +46,12 @@ Always run the validator before training.
 
 | Area                      | Current status                  |
 | ------------------------- | ------------------------------- |
-| UAVDT parser              | Stub / not implemented          |
 | Generic utilities package | Minimal/incomplete              |
 | Experiment configs        | Not fully populated             |
 | Model-specific configs    | Not fully populated             |
 | Tracking                  | Not implemented in core Phase 1 |
+
+The **UAVDT parser** (`src/aeronetra/datasets/uavdt.py`) is implemented from the documented format and unit-tested, but it is not yet verified against a real download — treat its converted labels as provisional.
 
 The **evaluation package** (`src/aeronetra/evaluation/`) is implemented and unit-tested: it provides IoU matching, precision/recall/F1, mAP@50 and mAP@50-95, and count-error metrics (MAE/RMSE/bias/MAPE). Its metrics are only as trustworthy as the ground truth and thresholds recorded alongside them — always store the `InferenceMetadata` with a report.
 

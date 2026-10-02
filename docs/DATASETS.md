@@ -27,12 +27,12 @@ flowchart LR
 | Dataset       | Intended use                     | Status            |
 | ------------- | -------------------------------- | ----------------- |
 | **VisDrone**  | Primary aerial detection dataset | ✅ Implemented     |
-| **UAVDT**     | Drone traffic detection/tracking | ⚠️ Stub only      |
+| **UAVDT**     | Drone traffic detection/tracking | ⚠️ Spec-based, unverified |
 | **UA-DETRAC** | Optional domain comparison       | ⬜ Not implemented |
 | Test fixtures | Unit/local validation            | ✅ Included        |
 
 {% hint style="warning" %}
-`src/aeronetra/datasets/uavdt.py` is a stub that raises `NotImplementedError`. Do not describe UAVDT as supported until a parser, tests and configuration are implemented.
+`src/aeronetra/datasets/uavdt.py` is implemented from the documented UAVDT DET format and is unit-tested, but it has not been verified against a real UAVDT download. Treat converted UAVDT labels as provisional until the column mapping is checked against the actual dataset.
 {% endhint %}
 
 ## Directory contract

@@ -73,7 +73,6 @@ Never fabricate implementations or claim these work:
 
 | Path                              | Status                             |
 | --------------------------------- | ---------------------------------- |
-| `src/aeronetra/datasets/uavdt.py` | Stub; raises `NotImplementedError` |
 | `configs/experiments/`            | No experiment configs yet          |
 | `configs/models/`                 | No model configs yet               |
 
@@ -162,7 +161,7 @@ Always capture the statistics dictionary returned by `convert_dataset()`.
 
 ### UAVDT
 
-`src/aeronetra/datasets/uavdt.py` is not implemented. Do not claim UAVDT support works.
+`src/aeronetra/datasets/uavdt.py` is implemented from the documented UAVDT DET format (`*_gt_whole.txt`, 1-based categories car/truck/bus) and is unit-tested, but it has **not** been verified against a real UAVDT download. Do not present it as validated on real data, and re-check the column mapping before relying on converted labels.
 
 ### Paths
 
