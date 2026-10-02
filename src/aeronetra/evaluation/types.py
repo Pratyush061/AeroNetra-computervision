@@ -145,3 +145,32 @@ class EvaluationReport:
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serialisable dict of the whole report."""
         return asdict(self)
+
+
+@dataclass
+class StratumMetrics:
+    """Detection metrics for one stratum: a size band or a density band."""
+
+    name: str
+    num_ground_truth: int
+    true_positives: int
+    false_positives: int
+    false_negatives: int
+    precision: float
+    recall: float
+    f1: float
+
+
+@dataclass
+class StratifiedMetrics:
+    """Detection metrics broken down by object size and image density.
+
+    Stratification answers *where* the errors are, not only how many there are.
+    Both breakdowns use the same operating point as :class:`DetectionMetrics`,
+    so their counts reconcile with the aggregate ones.
+    """
+
+    by_size: dict[str, StratumMetrics] = field(default_factory=dict)
+    by_density: dict[str, StratumMetrics] = field(default_factory=dict)
+    operating_confidence: float = 0.25
+    match_iou: float = 0.5

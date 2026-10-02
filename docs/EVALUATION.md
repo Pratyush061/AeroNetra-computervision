@@ -39,6 +39,7 @@ flowchart LR
 | `evaluation/detection.py` | `evaluate_detection()` — precision/recall/F1 and mAP@50 / mAP@50-95   |
 | `evaluation/counting.py`  | `evaluate_counting()` — MAE, RMSE, bias, MAPE against true counts     |
 | `evaluation/groundtruth.py` | `load_yolo_ground_truth()`, `load_visdrone_ground_truth()`          |
+| `evaluation/strata.py`    | `evaluate_by_stratum()` — metrics per object-size and density band    |
 | `evaluation/report.py`    | `evaluate_all()` and `save_report()` — one combined JSON report       |
 | `evaluation/types.py`     | Ground-truth and metric data structures                               |
 
@@ -54,6 +55,19 @@ Two confidence thresholds are used deliberately. `ap_conf_threshold` (default `0
 * **AP@50** is the 101-point interpolated average precision at IoU 0.5.
 * **mAP@50** and **mAP@50-95** average AP over classes that have ground truth; classes that appear only in predictions are reported per-class but excluded from the mean.
 * **Inference latency** is averaged from each prediction's `inference_time_ms`.
+
+## Stratified detection metrics
+
+Aggregate precision and recall hide *where* a model fails. `evaluate_by_stratum()` re-uses the same matching and the same operating point as `evaluate_detection()`, and reports precision, recall and F1 per stratum:
+
+* **Object size** — absolute pixel area, following COCO's convention (`small` below 32², `medium` below 96², `large` otherwise). A matched pair is attributed to the ground-truth box; a false positive to the detection box.
+* **Image density** — annotated objects per image (`sparse` up to 10, `moderate` up to 50, `dense` up to 100, `very_dense` above). Each image contributes all of its true positives, false positives and false negatives to one band.
+
+Both sets of bounds are parameters, and every configured band is always present, so a band with no objects is reported with zero support rather than omitted. Because the strata come from the same matching pass, their counts reconcile with the aggregate metrics.
+
+{% hint style="info" %}
+Only strata derivable from boxes are computed here. Occlusion and truncation need per-object attributes, which `GroundTruthObject` does not carry yet — that is the next extension.
+{% endhint %}
 
 ## Counting metrics
 

@@ -212,6 +212,7 @@ Use existing functions in `src/aeronetra/counting/` for coordinate conversion, c
 * `evaluate_detection()` → precision, recall, F1, mAP@50, mAP@50-95 and per-class metrics.
 * `evaluate_counting()` → MAE, RMSE, signed bias and MAPE against ground-truth counts.
 * `evaluate_all()` / `save_report()` → one JSON report combining both, ready for `outputs/metrics/`.
+* `evaluate_by_stratum()` → precision/recall/F1 per object-size and image-density band, so an aggregate number gains a profile of where the errors are.
 * `load_yolo_ground_truth()` / `load_visdrone_ground_truth()` → ground-truth loaders that reuse the existing coordinate helpers.
 
 Rules: do not fabricate metric values, do not average mAP over classes that have no ground truth, and do not apply NMS or other YOLO-specific post-processing to RT-DETR output before evaluating.

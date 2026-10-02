@@ -21,7 +21,7 @@ flowchart LR
 | Phase | Primary question                                                       | Status     |
 | ----- | ---------------------------------------------------------------------- | ---------- |
 | **1** | Can we detect and count vehicles reliably in individual aerial images? | 🟢 Current |
-| **2** | Can aerial fine-tuning improve detection quality?                      | Planned    |
+| **2** | Can aerial fine-tuning improve detection quality across conditions?    | Planned    |
 | **3** | Can vehicles retain identities across frames?                          | Planned    |
 | **4** | Can tracks become useful traffic/geospatial signals?                   | Planned    |
 | **5** | Can the pipeline operate efficiently in a UAV or simulation loop?      | Planned    |
@@ -39,9 +39,11 @@ Build the reusable research foundation:
 
 **Success means:** the same image and configuration can be rerun and interpreted consistently.
 
-## Phase 2 — Aerial fine-tuning
+## Phase 2 — Aerial fine-tuning and robustness across conditions
 
 Use aerial datasets to improve performance on small objects, top-down viewpoints and dense traffic. Training belongs on GPU-capable infrastructure such as Kaggle when local hardware is insufficient.
+
+Robustness is the other half of this phase. A detector that only works in the conditions it was trained on is not useful on a UAV, so improving — and *measuring* — behaviour under conditions the model has not seen (illumination, weather, altitude, viewpoint) belongs here too. Report it per condition against real data; augmentation alone is not evidence of robustness.
 
 ## Phase 3 — Video tracking
 
