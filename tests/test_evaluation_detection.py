@@ -1,5 +1,7 @@
 """Unit tests for detection metrics (precision/recall and average precision)."""
 
+import pytest
+
 from aeronetra.detection.types import BoundingBox, Detection, ModelPrediction
 from aeronetra.evaluation.detection import DEFAULT_AP_CONFIDENCE, evaluate_detection
 from aeronetra.evaluation.types import GroundTruth, GroundTruthObject
@@ -113,10 +115,19 @@ def test_low_confidence_detection_contributes_to_map_not_operating_point():
 
 
 def test_ap_confidence_threshold_can_exclude_low_confidence():
-    predictions = {"a": _prediction([_car((0, 0, 10, 10), conf=0.1)])}
+    predictions = {"a": _prediction([_car((0, 0, 10, 10), conf=0.1)])
 
     metrics = evaluate_detection(
         predictions, _single_car_ground_truth(), ap_conf_threshold=0.25
     )
 
     assert metrics.map50 == 0.0
+
+
+def test_class_agnostic_mode_is_rejected_instead_of_returning_misleading_metrics():
+    with pytest.raises(ValueError, match="only supports class-aware"):
+        evaluate_detection(
+            {"a": _prediction([_car((0, 0, 10, 10))])},
+            _single_car_ground_truth(),
+            class_aware=False,
+        )
