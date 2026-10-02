@@ -63,7 +63,7 @@ Aggregate precision and recall hide *where* a model fails. `evaluate_by_stratum(
 * **Object size** — absolute pixel area, following COCO's convention (`small` below 32², `medium` below 96², `large` otherwise). A matched pair is attributed to the ground-truth box; a false positive to the detection box.
 * **Image density** — annotated objects per image (`sparse` up to 10, `moderate` up to 50, `dense` up to 100, `very_dense` above). Each image contributes all of its true positives, false positives and false negatives to one band.
 
-Both sets of bounds are parameters, and every configured band is always present, so a band with no objects is reported with zero support rather than omitted. Because the strata come from the same matching pass, their counts reconcile with the aggregate metrics.
+Both sets of bounds are parameters and are validated: each must have exactly one fewer value than its labels, be strictly positive, and be strictly ascending, so a misconfigured band cannot silently misassign objects. Every configured band is always present, so a band with no objects is reported with zero support rather than omitted. Because the strata come from the same matching pass, their counts reconcile with the aggregate metrics. Stratification is class-aware only, mirroring `evaluate_detection()` — class-agnostic aggregation would break that reconciliation.
 
 {% hint style="info" %}
 Only strata derivable from boxes are computed here. Occlusion and truncation need per-object attributes, which `GroundTruthObject` does not carry yet — that is the next extension.
@@ -103,6 +103,15 @@ save_report(report, outputs_dir / "metrics" / "yolov8_val.json")
 ```
 
 `predictions` is a `{image_id: ModelPrediction}` mapping produced by a detector adapter. Pass the same confidence threshold that the run used; the report records both the operating-point and AP thresholds.
+
+To include the stratified breakdown in the same JSON artifact, pass `include_strata=True` (off by default, because it is a second matching pass):
+
+```python
+report = evaluate_all(predictions, ground_truth, include_strata=True)
+print(report.stratified.by_size["small"].recall)
+```
+
+The breakdown then appears under the `stratified` key of the saved report.
 
 ## Rules
 

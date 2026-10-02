@@ -13,6 +13,7 @@
   * [Model Comparison](docs/MODEL_COMPARISON.md)
   * [Model Inference Guide](docs/MODEL_INFERENCE.md)
   * [Notebook Guide](docs/NOTEBOOK_GUIDE.md)
+  * [Research Process](docs/RESEARCH_PROCESS.md)
   * [Research Scope](docs/RESEARCH_SCOPE.md)
 * [AeroNetra — Kaggle Notebooks](kaggle/README.md)
 * [PX4 + ROS 2 + Gazebo Integration](px4_ros2_jazzy_gazebo_harmonic_sitl/README.md)

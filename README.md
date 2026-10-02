@@ -87,9 +87,9 @@ AeroNetra-computervision/
 ├── src/aeronetra/          # Installable library (the reusable core)
 │   ├── detection/          # Adapters, prediction types, model interfaces
 │   ├── counting/           # Filtering, NMS, counting, drawing, export
-│   ├── datasets/           # VisDrone parsing + YOLO conversion (UAVDT stub)
+│   ├── datasets/           # VisDrone + UAVDT parsing and YOLO conversion
 │   ├── visualization/      # Dataset plotting helpers
-│   ├── evaluation/         # Placeholder (future metrics/benchmarking)
+│   ├── evaluation/         # Metrics, matching, stratified evaluation, JSON reports
 │   └── config.py           # Env-driven paths + YAML config loading
 ├── configs/                # Dataset + inference configuration (YAML)
 ├── notebooks/              # Local CPU workflows (00–08)
@@ -280,6 +280,7 @@ See the [Developer Guide](DEVELOPER_GUIDE.md) for architecture, conventions, and
 | Counting methodology | [docs/COUNTING_METHODOLOGY.md](docs/COUNTING_METHODOLOGY.md) |
 | Limitations | [docs/LIMITATIONS.md](docs/LIMITATIONS.md) |
 | Research scope | [docs/RESEARCH_SCOPE.md](docs/RESEARCH_SCOPE.md) |
+| Research process | [docs/RESEARCH_PROCESS.md](docs/RESEARCH_PROCESS.md) |
 | Notebooks | [docs/NOTEBOOK_GUIDE.md](docs/NOTEBOOK_GUIDE.md) |
 | Kaggle workflow | [kaggle/README.md](kaggle/README.md) |
 | Simulation (PX4 / ROS 2 / Gazebo) | [px4_ros2_jazzy_gazebo_harmonic_sitl/README.md](px4_ros2_jazzy_gazebo_harmonic_sitl/README.md) |

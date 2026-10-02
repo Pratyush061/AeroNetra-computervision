@@ -9,6 +9,7 @@ This repository is **AeroNetra**, a computer-vision research project for UAV/dro
 * **Research software only.** This is NOT a website, mobile app, dashboard, API product, or SaaS. Never add frontend frameworks, web servers, or UI code unless explicitly requested.
 * **Inspect before editing.** Always read existing files before modifying them. Preserve useful code and avoid unnecessary overwrites or refactors.
 * **Small, reviewable changes.** Prefer smaller, iterative modifications over large rewrites.
+* **Read the research process.** `docs/RESEARCH_PROCESS.md` records how work is chosen, sequenced and verified, the current research direction, and the decisions already taken. Read it before starting a task.
 * **Current phase is Phase 1** — static image vehicle detection and counting. Do NOT implement video tracking, geospatial analytics, or edge deployment unless explicitly asked.
 * **Verified simulation documentation exists.** Before changing PX4/ROS 2/Gazebo camera integration, read `px4_ros2_jazzy_gazebo_harmonic_sitl/docs/verified-yolo-camera-pipeline.md` and its troubleshooting guide.
 
@@ -212,7 +213,7 @@ Use existing functions in `src/aeronetra/counting/` for coordinate conversion, c
 * `evaluate_detection()` → precision, recall, F1, mAP@50, mAP@50-95 and per-class metrics.
 * `evaluate_counting()` → MAE, RMSE, signed bias and MAPE against ground-truth counts.
 * `evaluate_all()` / `save_report()` → one JSON report combining both, ready for `outputs/metrics/`.
-* `evaluate_by_stratum()` → precision/recall/F1 per object-size and image-density band, so an aggregate number gains a profile of where the errors are.
+* `evaluate_by_stratum()` → precision/recall/F1 per object-size and image-density band, so an aggregate number gains a profile of where the errors are. `evaluate_all(..., include_strata=True)` folds it into the JSON report.
 * `load_yolo_ground_truth()` / `load_visdrone_ground_truth()` → ground-truth loaders that reuse the existing coordinate helpers.
 
 Rules: do not fabricate metric values, do not average mAP over classes that have no ground truth, and do not apply NMS or other YOLO-specific post-processing to RT-DETR output before evaluating.
