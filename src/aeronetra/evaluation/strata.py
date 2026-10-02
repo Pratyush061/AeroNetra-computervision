@@ -15,9 +15,12 @@ other annotated attributes can be added once they are carried on
 from collections.abc import Sequence
 
 from aeronetra.detection.types import BoundingBox, ModelPrediction
-from aeronetra.evaluation.detection import OPERATING_IOU
+from aeronetra.evaluation.detection import OPERATING_IOU, _safe_ratio
 from aeronetra.evaluation.matching import match_image
 from aeronetra.evaluation.types import GroundTruth, StratifiedMetrics, StratumMetrics
+
+# ``_safe_ratio`` is imported from ``detection`` rather than redefined here, so
+# the metric division convention has exactly one definition in the package.
 
 # COCO's absolute-area convention, in square pixels: < 32**2 is "small",
 # < 96**2 is "medium", otherwise "large". Absolute rather than relative area
@@ -31,9 +34,24 @@ DEFAULT_DENSITY_BOUNDS: tuple[int, ...] = (10, 50, 100)
 DENSITY_LABELS: tuple[str, ...] = ("sparse", "moderate", "dense", "very_dense")
 
 
-def _safe_ratio(numerator: float, denominator: float) -> float:
-    """Divide, returning 0.0 when the denominator is zero."""
-    return numerator / denominator if denominator > 0 else 0.0
+def _check_bounds(bounds: Sequence[float], labels: Sequence[str], name: str) -> None:
+    """Reject a bound sequence that cannot partition the fixed ``labels``.
+
+    The labels are fixed tuples, so bounds of the wrong length would silently
+    collapse or drop bands, and non-ascending bounds would misassign boxes.
+    Failing loudly keeps a bad configuration from producing quietly wrong strata.
+    """
+    if len(bounds) != len(labels) - 1:
+        raise ValueError(
+            f"{name} must have exactly {len(labels) - 1} boundary values to "
+            f"partition {list(labels)}, got {len(bounds)}: {tuple(bounds)}"
+        )
+    if any(bound <= 0 for bound in bounds):
+        raise ValueError(
+            f"{name} values must be strictly positive, got {tuple(bounds)}"
+        )
+    if any(current >= following for current, following in zip(bounds, bounds[1:])):
+        raise ValueError(f"{name} must be strictly ascending, got {tuple(bounds)}")
 
 
 def size_stratum(box: BoundingBox, bounds: Sequence[float] = DEFAULT_SIZE_BOUNDS) -> str:
@@ -41,12 +59,16 @@ def size_stratum(box: BoundingBox, bounds: Sequence[float] = DEFAULT_SIZE_BOUNDS
 
     Args:
         box: An absolute ``xyxy`` box.
-        bounds: Ascending upper area bounds; there must be one fewer bound than
-            labels in :data:`SIZE_LABELS`.
+        bounds: Ascending, strictly positive upper area bounds; there must be
+            one fewer bound than labels in :data:`SIZE_LABELS`.
 
     Returns:
         A label from :data:`SIZE_LABELS`.
+
+    Raises:
+        ValueError: If ``bounds`` cannot partition :data:`SIZE_LABELS`.
     """
+    _check_bounds(bounds, SIZE_LABELS, "size_bounds")
     for bound, label in zip(bounds, SIZE_LABELS):
         if box.area < bound:
             return label
@@ -58,12 +80,16 @@ def density_stratum(count: int, bounds: Sequence[int] = DEFAULT_DENSITY_BOUNDS) 
 
     Args:
         count: Number of annotated objects in the image.
-        bounds: Ascending inclusive upper bounds; there must be one fewer bound
-            than labels in :data:`DENSITY_LABELS`.
+        bounds: Ascending, strictly positive inclusive upper bounds; there must
+            be one fewer bound than labels in :data:`DENSITY_LABELS`.
 
     Returns:
         A label from :data:`DENSITY_LABELS`.
+
+    Raises:
+        ValueError: If ``bounds`` cannot partition :data:`DENSITY_LABELS`.
     """
+    _check_bounds(bounds, DENSITY_LABELS, "density_bounds")
     for bound, label in zip(bounds, DENSITY_LABELS):
         if count <= bound:
             return label
@@ -119,11 +145,27 @@ def evaluate_by_stratum(
         conf_threshold: Confidence threshold for the operating point.
         size_bounds: Upper area bounds for the size bands.
         density_bounds: Inclusive upper bounds for the density bands.
-        class_aware: Require matched boxes to share a class id.
+        class_aware: Must remain true, so the strata stay comparable with
+            :func:`~aeronetra.evaluation.detection.evaluate_detection`, which
+            rejects class-agnostic aggregation for the same reason.
 
     Returns:
         A :class:`StratifiedMetrics` with one breakdown per stratification.
+
+    Raises:
+        ValueError: If ``class_aware`` is false, or either bound sequence cannot
+            partition its labels.
     """
+    if not class_aware:
+        raise ValueError(
+            "evaluate_by_stratum only supports class-aware evaluation; "
+            "class_agnostic aggregation requires a different metric schema"
+        )
+    # Validate up front so an invalid configuration fails even when there is no
+    # data to stratify.
+    _check_bounds(size_bounds, SIZE_LABELS, "size_bounds")
+    _check_bounds(density_bounds, DENSITY_LABELS, "density_bounds")
+
     operating = {
         image_id: prediction.filter_by_confidence(conf_threshold)
         for image_id, prediction in predictions.items()
