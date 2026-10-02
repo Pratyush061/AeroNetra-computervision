@@ -114,6 +114,7 @@ AeroNetra-computervision/
 | `evaluation/detection.py` | IoU matching, precision/recall/F1, mAP@50 and mAP@50-95 |
 | `evaluation/counting.py` | Count-error metrics (MAE, RMSE, bias, MAPE) |
 | `evaluation/groundtruth.py` | Ground-truth loaders for YOLO and VisDrone labels |
+| `evaluation/strata.py` | Stratified detection metrics by object size and image density |
 | `utils/seeding.py` | `set_seed()` — deterministic seeding for Python, NumPy and torch |
 | `utils/paths.py` | `ensure_dir()` — idempotent directory creation |
 | `utils/logs.py` | `configure_logging()` — shared logging setup |
@@ -244,7 +245,7 @@ flowchart LR
 | Phase | Focus | Status |
 | --- | --- | --- |
 | 1 | Static detection and image-level counting | **Current** |
-| 2 | Aerial fine-tuning and model improvement | Planned |
+| 2 | Aerial fine-tuning and robustness across conditions | Planned |
 | 3 | Video tracking and unique vehicle counts | Planned |
 | 4 | Traffic and geospatial analytics | Planned |
 | 5 | UAV / edge integration | Planned |
