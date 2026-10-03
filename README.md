@@ -62,29 +62,31 @@ Nothing here fabricates results: unimplemented modules fail loudly rather than r
 
 ```mermaid
 flowchart LR
-    A[Aerial / UAV image] --> B["BaseDetector interface<br/>(abstract base + get_model_adapter factory)"]
+    A[Aerial / UAV image] --> B[BaseDetector interface]
 
     B --> U[UltralyticsAdapter]
     B --> O[OnnxRuntimeAdapter]
 
-    U -. supports .-> Y["YOLO family<br/>YOLOv8 / YOLO11 / YOLO26"]
-    U -. supports .-> R["RT-DETR"]
+    U -. supports .-> Y["YOLO family<br/>(YOLOv8 / YOLO11 / YOLO26)"]
+    U -. supports .-> R[RT-DETR]
     O -. runs .-> X["Exported ONNX detector<br/>(ONNX Runtime)"]
 
     U --> C[Standardized ModelPrediction]
     O --> C
 
-    C --> P["Post-processing: confidence / class /<br/>area / aspect-ratio / ROI + NMS"]
+    C --> P["Post-processing<br/>(conf / class / area / aspect-ratio / ROI + NMS)"]
+    C --> G["Evaluation + Ground Truth"]
+
     P --> E[Vehicle counting]
     P --> V[Visualization & export]
 
-    C --> G[Evaluation + ground truth]
     G --> M["Precision / Recall / F1<br/>mAP@50 / mAP@50-95"]
-    G --> K["Count error (MAE / RMSE / bias / MAPE)<br/>+ stratified metrics (object size / image density)"]
+    G --> K["Count error<br/>Stratified metrics"]
 
-    E --> A2["Experiment analysis / JSON report"]
-    M --> A2
-    K --> A2
+    E --> RPT[Experiment report / analysis]
+    V --> RPT
+    M --> RPT
+    K --> RPT
 ```
 
 The critical boundary is the **detector adapter**. The adapters accept framework/model-specific inputs and normalize inference results into shared prediction objects so nothing downstream needs to know whether the detector came from Ultralytics or ONNX Runtime, or whether it is a YOLO-family or transformer-based model. This is what makes the pipeline modular and extensible.
