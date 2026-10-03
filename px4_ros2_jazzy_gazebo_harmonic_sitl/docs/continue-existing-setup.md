@@ -1,3 +1,9 @@
+---
+description: >-
+  How to add the AeroNetra simulation packages to an existing PX4 and ROS 2
+  installation without disturbing it.
+---
+
 # Continuing from an Existing Setup
 
 This repository is designed to respect your existing environment. It will **not** attempt to overwrite, delete, or reinstall software you have already configured.
@@ -18,7 +24,14 @@ export PX4_ROS2_WS=/path/to/your/px4_ros2_ws
 
 ## Adding the Demo Node
 
-To use the `px4_offboard_py` demo without touching your core files, simply add it to your existing workspace:
+The `scripts/setup_workspace.sh` script performs this step for you — it symlinks the package into `~/px4_ros2_ws/src/`, clones `px4_msgs` if it is missing, and builds the workspace:
+
+```bash
+cd px4_ros2_jazzy_gazebo_harmonic_sitl
+scripts/setup_workspace.sh
+```
+
+To do it manually, add the package to your existing workspace:
 
 1. Link or copy the package into your `src` directory:
    ```bash
