@@ -8,6 +8,10 @@ description: >-
 
 This is the daily execution path. The source code itself is not repeated here; use the canonical files on the OpenCV and YOLO pages.
 
+{% hint style="info" %}
+Each terminal below is available as a script in `scripts/` (`run_px4_gazebo.sh`, `run_image_bridge.sh`, `run_cv_detector.sh`, `run_cv_viewer.sh`). Run `scripts/setup_workspace.sh` once first.
+{% endhint %}
+
 ## Four-terminal startup
 
 Do not run everything inside one terminal.
