@@ -12,7 +12,7 @@ Model-specific behaviour is confined to detector _adapters_. Everything downstre
 
 ***
 
-## 🌟 Highlights
+### 🌟 Highlights
 
 * **One interface, many detectors.** `get_model_adapter(...)` returns a uniform adapter for YOLOv8, YOLO11, RT-DETR, and ONNX Runtime, so swapping models never changes downstream code.
 * **Standardized predictions.** Every backend is normalized into `ModelPrediction` / `Detection` / `BoundingBox`, so counting and visualization never touch raw framework output.
@@ -23,7 +23,7 @@ Model-specific behaviour is confined to detector _adapters_. Everything downstre
 
 ***
 
-## ℹ️ Overview
+### ℹ️ Overview
 
 Aerial vehicle detection is not ordinary street-level detection. Objects are small, dense, frequently occluded, and seen from unusual angles. AeroNetra separates that problem into explicit layers so each one can be tested, replaced, and reasoned about independently:
 
@@ -38,7 +38,7 @@ Aerial vehicle detection is not ordinary street-level detection. Objects are sma
 
 The current research phase is **Phase 1: static-image detection and counting**. Video tracking, persistent vehicle identities, geospatial analytics, and edge deployment are planned phases, not finished features.
 
-### ✅ What is implemented
+#### ✅ What is implemented
 
 * **Detection** — `UltralyticsAdapter` covering the YOLO family (YOLOv8, YOLO11) and RT-DETR, plus `OnnxRuntimeAdapter` for exported ONNX models, behind the shared `BaseDetector` abstract interface and a factory function.
 * **Counting** — coordinate conversion, clipping, area/aspect-ratio/ROI filtering, NMS, and image-level counting, with drawing and JSON/CSV export.
@@ -48,7 +48,7 @@ The current research phase is **Phase 1: static-image detection and counting**. 
 * **Utilities** — deterministic seeding (`set_seed`), filesystem helpers (`ensure_dir`), and logging setup (`configure_logging`).
 * **Tooling** — dataset download/validation scripts, a shared inference config, and a Ruff + pytest CI workflow.
 
-### 🚧 What is intentionally not implemented
+#### 🚧 What is intentionally not implemented
 
 | Path                                          | Status                |
 | --------------------------------------------- | --------------------- |
@@ -58,7 +58,7 @@ Nothing here fabricates results: unimplemented modules fail loudly rather than r
 
 ***
 
-## 🏗️ Architecture
+### 🏗️ Architecture
 
 ```mermaid
 flowchart LR
@@ -80,7 +80,7 @@ The detector adapters normalize model-specific outputs into a shared `ModelPredi
 
 ***
 
-## 🗂️ Repository layout
+### 🗂️ Repository layout
 
 ```
 AeroNetra-computervision/
@@ -101,7 +101,7 @@ AeroNetra-computervision/
                             # PX4 + ROS 2 + Gazebo simulation integration docs
 ```
 
-### Module map
+#### Module map
 
 | Module                      | What it does                                                                                          |
 | --------------------------- | ----------------------------------------------------------------------------------------------------- |
@@ -122,7 +122,7 @@ AeroNetra-computervision/
 
 ***
 
-## 🚀 Quick start
+### 🚀 Quick start
 
 ```bash
 git clone https://github.com/Pratyush061/AeroNetra-computervision.git
@@ -158,7 +158,7 @@ See Environment Setup for the full reference.
 
 ***
 
-## 💡 Usage
+### 💡 Usage
 
 Everything flows through the adapter interface — load a model, predict, filter, count, visualize:
 
@@ -199,7 +199,7 @@ For the lifecycle, failure modes, and reproducibility requirements, see the Mode
 
 ***
 
-## 📓 Notebooks
+### 📓 Notebooks
 
 | Location          | Runs on    | Purpose                                                                       |
 | ----------------- | ---------- | ----------------------------------------------------------------------------- |
@@ -211,7 +211,7 @@ Notebooks are thin: they call the library, they don't reimplement it. See the No
 
 ***
 
-## 📊 Reproducibility & model comparison
+### 📊 Reproducibility & model comparison
 
 AeroNetra treats reproducibility as part of the implementation, not a reporting afterthought. When you compare models, hold the evaluation conditions fixed and record them:
 
@@ -231,7 +231,7 @@ See Model Comparison and the Experiment Guide.
 
 ***
 
-## 🗺️ Roadmap
+### 🗺️ Roadmap
 
 ```mermaid
 flowchart LR
@@ -253,7 +253,7 @@ The roadmap is deliberately phased: later capabilities should build on measurabl
 
 ***
 
-## 🤝 Contributing
+### 🤝 Contributing
 
 Contributions that make the pipeline more reproducible, testable, and extensible are welcome.
 
@@ -268,7 +268,7 @@ See the Developer Guide for architecture, conventions, and the validation workfl
 
 ***
 
-## 📚 Documentation
+### 📚 Documentation
 
 | Topic                             | Guide                                                                                                |
 | --------------------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -287,11 +287,11 @@ See the Developer Guide for architecture, conventions, and the validation workfl
 
 ***
 
-## ⚖️ License
+### ⚖️ License
 
 Released under the MIT License. Upstream datasets and model dependencies carry their own terms — review them before redistribution or commercial use.
 
-## ✍️ Author
+### ✍️ Author
 
 Developed and maintained by the AeroNetra team ([@Pratyush061](https://github.com/Pratyush061)).
 
