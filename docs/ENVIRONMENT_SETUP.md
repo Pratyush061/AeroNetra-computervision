@@ -1,3 +1,9 @@
+---
+description: >-
+  Local installation, dependency and dataset-path configuration for the
+  AeroNetra computer-vision library.
+---
+
 # Environment Setup
 
 Detailed instructions for setting up the AeroNetra development environment locally. For GPU-accelerated training and evaluation, see **Kaggle Setup** below.
@@ -138,7 +144,7 @@ If using `scripts/download_dataset.py` to download VisDrone from Kaggle:
    3. **03_model_evaluation** → Evaluate all models (mAP@50, precision, recall)
    4. **04_inference_comparison** → Visual comparison and speed benchmarks
 
-   **Setup:** See [kaggle/README.md](../../kaggle/README.md) for step-by-step instructions.
+   **Setup:** See [kaggle/README.md](../kaggle/README.md) for step-by-step instructions.
 
    **Download Trained Weights:** After training on Kaggle, download weights locally and use via:
    ```python
