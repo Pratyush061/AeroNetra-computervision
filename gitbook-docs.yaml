@@ -1,0 +1,42 @@
+$schema: https://api.gitbook.com/gitbook-docs.yaml
+version: 1
+site:
+  title: AeroNetra Computer Vision
+  structure:
+    - type: section
+      key: section-aeronetra
+      title: AeroNetra
+      path: aeronetra
+      default: true
+      children:
+        - type: space
+          key: space-overview
+          title: Overview
+          path: overview
+          default: true
+          content:
+            directory: ./
+        - type: space
+          key: space-guides
+          title: Guides
+          path: guides
+          content:
+            directory: ./docs
+    - type: section
+      key: section-workflows
+      title: Workflows
+      path: workflows
+      children:
+        - type: space
+          key: space-kaggle
+          title: Kaggle Notebooks
+          path: kaggle
+          default: true
+          content:
+            directory: ./kaggle
+        - type: space
+          key: space-simulation
+          title: PX4 / ROS 2 / Gazebo Simulation
+          path: simulation
+          content:
+            directory: ./px4_ros2_jazzy_gazebo_harmonic_sitl
