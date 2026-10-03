@@ -61,7 +61,7 @@ Nothing here fabricates results: unimplemented modules fail loudly rather than r
 ## 🏗️ Architecture
 
 ```mermaid
-flowchart TD
+flowchart LR
     A[Aerial / UAV image] --> B[Detector interface]
     B --> U["UltralyticsAdapter<br/>YOLO / RT-DETR"]
     B --> O["OnnxRuntimeAdapter<br/>ONNX detectors"]
