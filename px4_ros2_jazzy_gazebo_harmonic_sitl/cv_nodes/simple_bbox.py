@@ -51,7 +51,7 @@ class BackgroundBoundingBox(Node):
                 message,
                 desired_encoding="bgr8",
             )
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001 - keep the node alive on a bad frame
             self.get_logger().error(
                 f"Could not convert ROS image: {error}"
             )
@@ -182,7 +182,7 @@ class BackgroundBoundingBox(Node):
             )
             mask_message.header = message.header
             self.mask_publisher.publish(mask_message)
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001 - keep the node alive on a bad frame
             self.get_logger().error(
                 f"Could not publish processed image: {error}"
             )
