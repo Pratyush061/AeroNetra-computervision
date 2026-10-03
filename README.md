@@ -62,27 +62,27 @@ Nothing here fabricates results: unimplemented modules fail loudly rather than r
 
 ```mermaid
 flowchart LR
-    A[Aerial / UAV image] --> B[BaseDetector interface]
+    A[Aerial / UAV image] --> B["BaseDetector interface<br/>(abstract base + get_model_adapter factory)"]
 
     B --> U[UltralyticsAdapter]
     B --> O[OnnxRuntimeAdapter]
 
-    U -. supports .-> Y[YOLO family]
-    U -. supports .-> R[RT-DETR]
-    O -. runs .-> X[Exported ONNX detector]
+    U -. supports .-> Y["YOLO family<br/>YOLOv8 / YOLO11 / YOLO26"]
+    U -. supports .-> R["RT-DETR"]
+    O -. runs .-> X["Exported ONNX detector<br/>(ONNX Runtime)"]
 
     U --> C[Standardized ModelPrediction]
     O --> C
 
-    C --> P["Post-processing: confidence / class / area / ROI"]
+    C --> P["Post-processing: confidence / class /<br/>area / aspect-ratio / ROI + NMS"]
     P --> E[Vehicle counting]
     P --> V[Visualization & export]
 
     C --> G[Evaluation + ground truth]
     G --> M["Precision / Recall / F1<br/>mAP@50 / mAP@50-95"]
-    G --> K["Count error + stratified metrics"]
+    G --> K["Count error (MAE / RMSE / bias / MAPE)<br/>+ stratified metrics (object size / image density)"]
 
-    E --> A2[Experiment analysis]
+    E --> A2["Experiment analysis / JSON report"]
     M --> A2
     K --> A2
 ```
@@ -144,7 +144,7 @@ source .venv/bin/activate        # Windows: .venv\\Scripts\\activate
 
 pip install --upgrade pip
 pip install -r requirements.txt
-pip install -r requirements-dev.txt
+pit install -r requirements-dev.txt
 pip install -e .
 ```
 
