@@ -131,7 +131,7 @@ That is the annotated topic with the YOLO labels, confidence values, bounding bo
 
 The model was trained using VisDrone aerial imagery, so the simulated camera perspective materially affects detection. The recorded guidance is to keep the complete car visible, avoid extreme close-ups and clipping, use a realistic textured car, expose the roof and full body, use an elevated slightly downward angle, keep the car large enough in frame, use daylight or clear simulated lighting, and avoid occlusion.
 
-The recorded default confidence was `0.15`. After stable detection, the PDF raises it to `0.25`; for diagnosis, it records `0.08` with `640` image size.
+The recorded default confidence was `0.15`. After stable detection, the recorded run raises it to `0.25`; for diagnosis, it records `0.08` with `640` image size.
 
 For CPU responsiveness, the recorded fallback is:
 
