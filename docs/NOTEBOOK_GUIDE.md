@@ -1,3 +1,9 @@
+---
+description: >-
+  How the numbered AeroNetra notebooks progress from environment checks to
+  model evaluation.
+---
+
 # Notebook Guide
 
 Notebooks in this repository are for exploration, experimentation, and presenting findings. They follow a numbered progression from environment verification to model evaluation.
