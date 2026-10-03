@@ -12,11 +12,16 @@ Use this section as the operational reference for AeroNetra's PX4/ROS 2/Gazebo w
 
 | Guide                                                             | Use it when                                                                               |
 | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Continuing from an Existing Setup                                 | You already have PX4 and ROS 2 installed and want to avoid destructive setup changes.     |
-| Environment Report                                                | You need to verify the expected software and workspace before running anything.           |
-| Running the Simulation                                            | You are testing PX4 telemetry and offboard control through Micro XRCE-DDS.                |
+| [Continuing from an Existing Setup](continue-existing-setup.md)   | You already have PX4 and ROS 2 installed and want to avoid destructive setup changes.     |
+| [Environment Report](environment-report.md)                       | You need to verify the expected software and workspace before running anything.           |
+| [Running the Simulation Demonstration](run-simulation.md)         | You want the recorded four-terminal camera-and-YOLO startup, step by step.                |
 | [Verified YOLO Camera Pipeline](verified-yolo-camera-pipeline.md) | You want the tested `gz_x500_depth` camera → ROS 2 → YOLO → `/vision/annotated` workflow. |
-| Troubleshooting                                                   | A topic, bridge, detector, viewer, or preflight check is failing.                         |
+| [Actual Simulation Record](actual-simulation-record/README.md)    | You want the raw experiment history, source code and observed failure notes.              |
+| [Troubleshooting](troubleshooting.md)                             | A topic, bridge, detector, viewer, or preflight check is failing.                         |
+
+{% hint style="info" %}
+Run `scripts/setup_workspace.sh` once, then drive the simulation with the per-terminal scripts: `run_px4_gazebo.sh`, `run_image_bridge.sh`, `run_cv_detector.sh`, `run_cv_viewer.sh`. See the [section README](../README.md) for the full quickstart.
+{% endhint %}
 
 ## Important architecture boundary
 

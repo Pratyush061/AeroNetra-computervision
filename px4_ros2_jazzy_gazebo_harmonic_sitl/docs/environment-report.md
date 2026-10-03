@@ -1,3 +1,9 @@
+---
+description: >-
+  A checklist for verifying the Ubuntu, ROS 2, Gazebo, PX4 and px4_msgs
+  prerequisites before running the simulation.
+---
+
 # Environment Report Template
 
 You can run the included `scripts/check_existing_setup.sh` utility script to check these requirements on your Ubuntu 24.04 machine.

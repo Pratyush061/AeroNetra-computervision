@@ -99,8 +99,8 @@ Test the trained model:
 ```bash
 python3 - <<'PY'
 from ultralytics import YOLO
-model_path =
-"/home/pratyush-jain/px4_ros2_ws/models/best.pt"
+import os
+model_path = os.path.expanduser("~/px4_ros2_ws/models/best.pt")
 model = YOLO(model_path)
 print("MODEL LOAD: SUCCESS")
 print("Task:", model.task)
@@ -134,11 +134,6 @@ Create the detector:
 
 ```bash
 cat > ~/px4_ros2_ws/aeronetra_cv/yolo_car_detector.py <<'PY'
-```
-
-Replace the file with:
-
-```python
 #!/usr/bin/env python3
 import os
 import time
@@ -171,7 +166,7 @@ class YoloCarDetector(Node):
         )
         self.model_path = os.environ.get(
             "YOLO_MODEL",
-            "/home/pratyush-jain/px4_ros2_ws/models/best.pt",
+            "~/px4_ros2_ws/models/best.pt",
         )
         self.confidence = float(
             os.environ.get("YOLO_CONF", "0.15")
@@ -334,6 +329,10 @@ if __name__ == "__main__":
     main()
 PY
 ```
+
+{% hint style="info" %}
+The runnable copy of this node ships in the repository at `cv_nodes/yolo_car_detector.py`; `scripts/setup_workspace.sh` places it at `~/px4_ros2_ws/aeronetra_cv/yolo_car_detector.py`. The default model path is `~/px4_ros2_ws/models/best.pt`, overridable with the `YOLO_MODEL` environment variable.
+{% endhint %}
 
 Make it executable:
 

@@ -1,3 +1,9 @@
+---
+description: >-
+  GPU workflow for AeroNetra: VisDrone preparation, model training,
+  evaluation and multi-model inference on Kaggle.
+---
+
 # AeroNetra — Kaggle Notebooks
 
 GPU-accelerated notebooks designed to run on [Kaggle](https://www.kaggle.com/) for tasks that require a GPU (training, evaluation, batch inference).

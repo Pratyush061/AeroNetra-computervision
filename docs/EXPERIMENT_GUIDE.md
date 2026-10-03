@@ -1,3 +1,8 @@
+---
+description: >-
+  How to run, record and compare experiments reproducibly in AeroNetra.
+---
+
 # Experiment Guide
 
 Guidelines for conducting, recording, and comparing experiments in AeroNetra.

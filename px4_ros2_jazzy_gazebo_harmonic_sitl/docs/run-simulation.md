@@ -6,7 +6,11 @@ description: >-
 
 # Running the Simulation Demonstration
 
-This page now follows the **actual camera-and-car simulation** documented in the AeroNetra experiment PDF. The computer-vision run uses four terminals so PX4/Gazebo, the Gazebo image bridge, the YOLO detector, and the visualizer remain independently observable.
+This page follows the **actual camera-and-car simulation** from the recorded AeroNetra run. The computer-vision run uses four terminals so PX4/Gazebo, the Gazebo image bridge, the YOLO detector, and the visualizer remain independently observable.
+
+{% hint style="info" %}
+These same four steps are available as scripts: `scripts/run_px4_gazebo.sh`, `scripts/run_image_bridge.sh`, `scripts/run_cv_detector.sh`, `scripts/run_cv_viewer.sh`.
+{% endhint %}
 
 {% hint style="success" %}
 The tested vehicle is `gz_x500_depth` with the IMX214 camera. The car is a Prius model inserted into Gazebo through Resource Spawner. The camera path uses `ros_gz_image`; Micro XRCE-DDS is separate and is only needed later when PX4 telemetry/control topics are required.

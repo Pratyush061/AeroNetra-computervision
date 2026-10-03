@@ -12,6 +12,21 @@ Model-specific behaviour is confined to detector _adapters_. Everything downstre
 
 ***
 
+### 🚦 Where to start
+
+Pick the entry point that matches your goal:
+
+| I want to…                                      | Start here                                                                                        |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Install and use the detection/counting library  | [Quick start](#-quick-start) → [docs/ENVIRONMENT_SETUP.md](docs/ENVIRONMENT_SETUP.md)             |
+| Run the PX4 / ROS 2 / Gazebo simulation         | [px4_ros2_jazzy_gazebo_harmonic_sitl/README.md](px4_ros2_jazzy_gazebo_harmonic_sitl/README.md)    |
+| Train or evaluate models on a GPU               | [kaggle/README.md](kaggle/README.md)                                                              |
+| Contribute code                                 | [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)                                                          |
+
+New here? Read the [Developer Guide](DEVELOPER_GUIDE.md) for architecture and conventions, and [docs/RESEARCH_SCOPE.md](docs/RESEARCH_SCOPE.md) for the phased roadmap.
+
+***
+
 ### 🌟 Highlights
 
 * **One interface, many detectors.** `get_model_adapter(...)` returns a uniform adapter for YOLOv8, YOLO11, RT-DETR, and ONNX Runtime, so swapping models never changes downstream code.
@@ -100,7 +115,7 @@ AeroNetra-computervision/
 ├── tests/                  # Unit tests and fixtures
 ├── docs/                   # In-depth guides (setup, datasets, inference, …)
 └── px4_ros2_jazzy_gazebo_harmonic_sitl/
-                            # PX4 + ROS 2 + Gazebo simulation integration docs
+                            # PX4 + ROS 2 + Gazebo simulation: docs, scripts, cv_nodes, ros2_ws
 ```
 
 #### Module map
@@ -133,11 +148,11 @@ git clone https://github.com/Pratyush061/AeroNetra-computervision.git
 cd AeroNetra-computervision
 
 python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\\Scripts\\activate
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 
 pip install --upgrade pip
 pip install -r requirements.txt
-pit install -r requirements-dev.txt
+pip install -r requirements-dev.txt
 pip install -e .
 ```
 
@@ -208,8 +223,8 @@ For the lifecycle, failure modes, and reproducibility requirements, see the Mode
 | Location          | Runs on    | Purpose                                                                       |
 | ----------------- | ---------- | ----------------------------------------------------------------------------- |
 | `notebooks/00–06` | Local CPU  | Environment checks, dataset exploration, OpenCV baseline, per-model inference |
-| `notebooks/07–08` | Local GPU  | Entry points for training/evaluation (delegated to the Kaggle pipeline)       |
-| `kaggle/01–05`    | Kaggle GPU | Dataset preparation → training → evaluation → inference comparison → tracking |
+| `notebooks/07–09` | Local GPU  | Entry points for training, evaluation and stratified evaluation (delegated to the Kaggle pipeline) |
+| `kaggle/01–05`    | Kaggle GPU | Dataset preparation → training → evaluation → inference comparison → clip tracking |
 
 Notebooks are thin: they call the library, they don't reimplement it. See the Notebook Guide and the Kaggle workflow guide.
 
@@ -274,20 +289,21 @@ See the Developer Guide for architecture, conventions, and the validation workfl
 
 ### 📚 Documentation
 
-| Topic                             | Guide                                                                                                |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Environment setup                 | docs/ENVIRONMENT\\\_SETUP.md                                                                         |
-| Datasets                          | docs/DATASETS.md                                                                                     |
-| Model inference                   | docs/MODEL\\\_INFERENCE.md                                                                           |
-| Model comparison                  | docs/MODEL\\\_COMPARISON.md                                                                          |
-| Counting methodology              | docs/COUNTING\\\_METHODOLOGY.md                                                                      |
-| Limitations                       | docs/LIMITATIONS.md                                                                                  |
-| Research scope                    | docs/RESEARCH\\\_SCOPE.md                                                                            |
-| Research process                  | docs/RESEARCH\\\_PROCESS.md                                                                          |
-| Notebooks                         | docs/NOTEBOOK\\\_GUIDE.md                                                                            |
-| Kaggle workflow                   | kaggle/README.md                                                                                     |
-| Simulation (PX4 / ROS 2 / Gazebo) | [px4\\\_ros2\\\_jazzy\\\_gazebo\\\_harmonic\\\_sitl/README.md](px4_ros2_jazzy_gazebo_harmonic_sitl/) |
-| Developer guide                   | DEVELOPER\\\_GUIDE.md                                                                                |
+| Topic                             | Guide                                                                                                   |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Environment setup                 | [docs/ENVIRONMENT_SETUP.md](docs/ENVIRONMENT_SETUP.md)                                                  |
+| Datasets                          | [docs/DATASETS.md](docs/DATASETS.md)                                                                    |
+| Model inference                   | [docs/MODEL_INFERENCE.md](docs/MODEL_INFERENCE.md)                                                      |
+| Model comparison                  | [docs/MODEL_COMPARISON.md](docs/MODEL_COMPARISON.md)                                                    |
+| Counting methodology              | [docs/COUNTING_METHODOLOGY.md](docs/COUNTING_METHODOLOGY.md)                                            |
+| Evaluation                        | [docs/EVALUATION.md](docs/EVALUATION.md)                                                                |
+| Limitations                       | [docs/LIMITATIONS.md](docs/LIMITATIONS.md)                                                              |
+| Research scope                    | [docs/RESEARCH_SCOPE.md](docs/RESEARCH_SCOPE.md)                                                        |
+| Research process                  | [docs/RESEARCH_PROCESS.md](docs/RESEARCH_PROCESS.md)                                                    |
+| Notebooks                         | [docs/NOTEBOOK_GUIDE.md](docs/NOTEBOOK_GUIDE.md)                                                        |
+| Kaggle workflow                   | [kaggle/README.md](kaggle/README.md)                                                                    |
+| Simulation (PX4 / ROS 2 / Gazebo) | [px4_ros2_jazzy_gazebo_harmonic_sitl/README.md](px4_ros2_jazzy_gazebo_harmonic_sitl/README.md)          |
+| Developer guide                   | [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)                                                                |
 
 ***
 

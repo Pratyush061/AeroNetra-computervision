@@ -3,7 +3,7 @@
 * [AeroNetra Computer Vision](README.md)
 * [Instructions for Coding Agents](AGENTS.md)
 * [Developer Guide](DEVELOPER_GUIDE.md)
-* [docs](docs/README.md)
+* [Guides](docs/README.md)
   * [Counting Methodology](docs/COUNTING_METHODOLOGY.md)
   * [Datasets Guide](docs/DATASETS.md)
   * [Environment Setup](docs/ENVIRONMENT_SETUP.md)
