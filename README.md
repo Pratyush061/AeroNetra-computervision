@@ -1,6 +1,6 @@
 # AeroNetra Computer Vision
 
-[![Tests](https://github.com/Pratyush061/AeroNetra-computervision/actions/workflows/tests.yml/badge.svg)](https://github.com/Pratyush061/AeroNetra-computervision/actions/workflows/tests.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE/) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml) [![Lint: Ruff](https://img.shields.io/badge/lint-ruff-261230.svg)](https://github.com/astral-sh/ruff)
+[![Tests](https://github.com/Pratyush061/AeroNetra-computervision/actions/workflows/tests.yml/badge.svg)](https://github.com/Pratyush061/AeroNetra-computervision/actions/workflows/tests.yml) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg) [![Lint: Ruff](https://img.shields.io/badge/lint-ruff-261230.svg)](https://github.com/astral-sh/ruff)
 
 > A modular, reproducible computer-vision platform for detecting and counting vehicles in aerial and UAV imagery.
 
@@ -77,6 +77,7 @@ flowchart TD
 ```
 
 The detector adapters normalize model-specific outputs into a shared `ModelPrediction`. Post-processing feeds vehicle counting and visualization/export, while evaluation compares predictions with ground truth and reports detection and counting metrics. Both paths contribute to the experiment analysis.
+
 ***
 
 ## 🗂️ Repository layout
@@ -288,7 +289,7 @@ See the Developer Guide for architecture, conventions, and the validation workfl
 
 ## ⚖️ License
 
-Released under the [MIT License](LICENSE/). Upstream datasets and model dependencies carry their own terms — review them before redistribution or commercial use.
+Released under the MIT License. Upstream datasets and model dependencies carry their own terms — review them before redistribution or commercial use.
 
 ## ✍️ Author
 
