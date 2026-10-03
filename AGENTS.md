@@ -45,6 +45,9 @@ This repository is **AeroNetra**, a computer-vision research project for UAV/dro
 │   │   ├── report.py
 │   │   ├── strata.py
 │   │   └── types.py
+│   ├── tracking/
+│   │   ├── ops.py
+│   │   └── types.py
 │   └── utils/
 │       ├── seeding.py
 │       ├── paths.py
@@ -218,6 +221,16 @@ Use existing functions in `src/aeronetra/counting/` for coordinate conversion, c
 * `load_yolo_ground_truth()` / `load_visdrone_ground_truth()` → ground-truth loaders that reuse the existing coordinate helpers.
 
 Rules: do not fabricate metric values, do not average mAP over classes that have no ground truth, and do not apply NMS or other YOLO-specific post-processing to RT-DETR output before evaluating.
+
+### Tracking (Phase 3)
+
+`src/aeronetra/tracking/` turns per-frame detections into persistent identities. It builds on a detector; it does not replace or retrain one.
+
+* Drive frames through `track_frames()` or `track_video()`; do not call `model.track()` directly in reusable code, for the same reason `predict()` goes through the adapter.
+* `persist=True` is only valid for consecutive frames of one video stream. Never reuse tracker state across unrelated videos.
+* ByteTrack (`bytetrack.yaml`) is the default. BoT-SORT is more accurate on aerial footage but costs roughly four times the runtime; both are selected by name, not hardcoded.
+* A unique count is identities, not detections. Report `raw_track_ids` and `dropped_short_tracks` alongside `total_unique`, so flicker is visible rather than hidden inside the total.
+* Tracking is not trained and does not change detection weights. Never present a tracker as improving detection accuracy.
 
 ### Utilities package
 

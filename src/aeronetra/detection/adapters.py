@@ -7,7 +7,12 @@ from abc import ABC, abstractmethod
 import cv2
 import numpy as np
 
-from aeronetra.detection.types import BoundingBox, Detection, ModelPrediction
+from aeronetra.detection.types import (
+    BoundingBox,
+    Detection,
+    ModelPrediction,
+    TrackedDetection,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +35,26 @@ class BaseDetector(ABC):
     @abstractmethod
     def predict(self, image: np.ndarray, conf_thresh: float = 0.25, iou_thresh: float = 0.45) -> ModelPrediction:
         """Runs inference on a single image and returns standardized detections."""
+
+    def track(
+        self,
+        image: np.ndarray,
+        persist: bool = True,
+        tracker: str | None = None,
+        conf_thresh: float = 0.25,
+        iou_thresh: float = 0.45,
+    ) -> list[TrackedDetection]:
+        """Runs inference and associates the detections with existing tracks.
+
+        Not every backend can do this: association needs mutable per-stream
+        state that a stateless session does not have. Backends that cannot
+        track say so explicitly rather than silently returning untracked
+        detections, which would look like tracking that never switches ids.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} does not support tracking. "
+            "Use a backend that implements track(), or a dedicated tracker."
+        )
 
 class UltralyticsAdapter(BaseDetector):
     """
@@ -109,6 +134,70 @@ class UltralyticsAdapter(BaseDetector):
             image_height=img_h,
             inference_time_ms=inference_time_ms
         )
+
+    def track(
+        self,
+        image: np.ndarray,
+        persist: bool = True,
+        tracker: str | None = None,
+        conf_thresh: float = 0.25,
+        iou_thresh: float = 0.45,
+    ) -> list[TrackedDetection]:
+        """Tracks one frame, reusing tracker state when ``persist`` is set.
+
+        ``persist=True`` is only correct for consecutive frames of a single
+        video stream: the tracker holds box and id state between calls, so
+        passing unrelated images would leak identities across them. The caller
+        owns that contract, which is why the frame loop lives in
+        :mod:`aeronetra.tracking`.
+        """
+        if self.model is None:
+            raise RuntimeError("Model not loaded. Call load_model() first.")
+
+        kwargs = {"persist": persist}
+        if tracker is not None:
+            kwargs["tracker"] = tracker
+        results = self.model.track(
+            source=image,
+            conf=conf_thresh,
+            iou=iou_thresh,
+            device=self.device,
+            verbose=False,
+            **kwargs,
+        )
+
+        result = results[0]
+        # ``id`` is None when the tracker has not run, so this is the honest
+        # "no tracks this frame" case rather than an empty-but-tracked one.
+        if result.boxes is None or result.boxes.id is None:
+            return []
+
+        boxes = result.boxes.xyxy.cpu().numpy()
+        confs = result.boxes.conf.cpu().numpy()
+        classes = result.boxes.cls.cpu().numpy()
+        track_ids = result.boxes.id.cpu().numpy()
+
+        tracked = []
+        for box, conf, cls_id, track_id in zip(boxes, confs, classes, track_ids):
+            cid = int(cls_id)
+            tracked.append(
+                TrackedDetection(
+                    detection=Detection(
+                        box=BoundingBox(
+                            xmin=float(box[0]),
+                            ymin=float(box[1]),
+                            xmax=float(box[2]),
+                            ymax=float(box[3]),
+                        ),
+                        class_id=cid,
+                        class_name=self.class_names.get(cid, str(cid)),
+                        confidence=float(conf),
+                        source_model=self.model_type,
+                    ),
+                    track_id=int(track_id),
+                )
+            )
+        return tracked
 
 def _letterbox(image: np.ndarray, size: tuple[int, int]) -> tuple[np.ndarray, float, int, int]:
     """Resize preserving aspect ratio and pad to ``size`` with grey (114).

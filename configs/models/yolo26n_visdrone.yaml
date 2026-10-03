@@ -1,0 +1,21 @@
+# Model + training configuration for the YOLO26n baseline on VisDrone.
+#
+# YOLO26 (September 2025) is the edge-optimised member of the family: NMS-free
+# end-to-end inference, no DFL, and small-target-aware label assignment. It is
+# recorded here as the documented upgrade path from YOLO11n, not as a validated
+# result — the two have not been compared on this project's data yet, so this
+# config exists to make that comparison reproducible rather than to claim an
+# outcome.
+model_name: "YOLO26n"
+architecture: "yolo26n"
+weights: "yolo26n.pt"   # COCO-pretrained initialisation
+adapter: "ultralytics"
+train:
+  data: "configs/datasets/visdrone_yolo.yaml"
+  epochs: 50
+  imgsz: 640
+  batch: -1
+  patience: 10
+  seed: 42
+  project: "${OUTPUT_DIR}"
+  name: "yolo26n_visdrone"
