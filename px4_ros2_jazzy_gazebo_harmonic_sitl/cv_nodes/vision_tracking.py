@@ -42,7 +42,7 @@ class VisionTrackingNode(Node):
                 message,
                 desired_encoding="bgr8",
             )
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001 - keep the node alive on a bad frame
             self.get_logger().error(f"Image conversion failed: {error}")
             return
 
@@ -219,7 +219,7 @@ class VisionTrackingNode(Node):
             )
             output.header = message.header
             self.annotated_publisher.publish(output)
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001 - keep the node alive on a bad frame
             self.get_logger().error(
                 f"Annotated image publishing failed: {error}"
             )
