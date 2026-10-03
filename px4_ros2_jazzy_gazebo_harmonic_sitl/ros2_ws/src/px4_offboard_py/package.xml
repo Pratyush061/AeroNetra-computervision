@@ -4,7 +4,7 @@
   <name>px4_offboard_py</name>
   <version>0.0.0</version>
   <description>PX4 Offboard control node in Python using rclpy for ROS 2 Jazzy</description>
-  <maintainer email="user@todo.todo">User</maintainer>
+  <maintainer email="pjdev02@gmail.com">Pratyush Jain</maintainer>
   <license>Apache-2.0</license>
 
   <depend>rclpy</depend>
