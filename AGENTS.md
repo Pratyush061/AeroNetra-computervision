@@ -10,7 +10,8 @@ This repository is **AeroNetra**, a computer-vision research project for UAV/dro
 * **Inspect before editing.** Always read existing files before modifying them. Preserve useful code and avoid unnecessary overwrites or refactors.
 * **Small, reviewable changes.** Prefer smaller, iterative modifications over large rewrites.
 * **Read the research process.** `docs/RESEARCH_PROCESS.md` records how work is chosen, sequenced and verified, the current research direction, and the decisions already taken. Read it before starting a task.
-* **Current phase is Phase 1** — static image vehicle detection and counting. Do NOT implement video tracking, geospatial analytics, or edge deployment unless explicitly asked.
+* **Current phase is Phase 3** — video tracking, built on the completed Phase 1 detection and counting layer. Do NOT implement geospatial analytics or edge deployment unless explicitly asked.
+* **Tracking is inference-time only.** It associates detections across frames; it is not trained and does not change detection weights. Never present a tracker as improving detection accuracy.
 * **Verified simulation documentation exists.** Before changing PX4/ROS 2/Gazebo camera integration, read `px4_ros2_jazzy_gazebo_harmonic_sitl/docs/verified-yolo-camera-pipeline.md` and its troubleshooting guide.
 
 ***

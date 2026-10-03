@@ -4,7 +4,7 @@
 
 > A modular, reproducible computer-vision platform for detecting and counting vehicles in aerial and UAV imagery.
 
-AeroNetra is a research codebase for **static-image vehicle detection and image-level counting** from drone imagery. It is built around a single idea:
+AeroNetra is a research codebase for **vehicle detection, image-level counting and video tracking** from drone imagery. It is built around a single idea:
 
 > **Change the detector without rewriting the rest of the perception pipeline.**
 
@@ -51,7 +51,7 @@ Aerial vehicle detection is not ordinary street-level detection. Objects are sma
 | **Visualization**   | Inspect predictions and export analysis artifacts                    |
 | **Experiments**     | Keep configurations, evaluation conditions, and comparisons explicit |
 
-The current research phase is **Phase 1: static-image detection and counting**. Persistent vehicle identities, geospatial analytics, and edge deployment are planned phases. Video tracking has an exploratory implementation (see below) but is not part of the verified Phase-1 path.
+The current research phase is **Phase 3: video tracking**. Phase 1 (static-image detection and counting) is implemented and tested, and tracking now gives each vehicle a persistent identity so a count means vehicles rather than boxes. Geospatial analytics and edge deployment remain planned phases, not finished features.
 
 #### ✅ What is implemented
 
@@ -60,15 +60,15 @@ The current research phase is **Phase 1: static-image detection and counting**. 
 * **Datasets** — a VisDrone parser, class mapping, and YOLO-format converter, with fixtures and unit tests.
 * **UAVDT** — a sequence-based DET parser, class mapping and YOLO converter, implemented from the documented UAVDT format (not yet verified against a real download).
 * **Evaluation** — IoU matching, precision/recall/F1, mAP@50 and mAP@50-95, and count-error metrics (MAE/RMSE/bias/MAPE), with ground-truth loaders for YOLO and VisDrone labels and JSON report export.
+* **Tracking** — ByteTrack/BoT-SORT association across frames behind the detector adapter, with unique-vehicle counting, annotated video output, and a CLI demo (`scripts/track_video.py`).
 * **Utilities** — deterministic seeding (`set_seed`), filesystem helpers (`ensure_dir`), and logging setup (`configure_logging`).
-* **Tracking (experimental)** — ByteTrack-based clip tracking (`tracking/ops.py`) with a Kaggle notebook; exploratory, and not part of the verified Phase-1 detection/counting path.
 * **Tooling** — dataset download/validation scripts, a shared inference config, and a Ruff + pytest CI workflow.
 
 #### 🚧 What is intentionally not implemented
 
 | Path                                          | Status                |
 | --------------------------------------------- | --------------------- |
-| Geospatial analytics / edge deployment | Later research phases |
+| Geospatial analytics / edge deployment        | Later research phases |
 
 Nothing here fabricates results: unimplemented modules fail loudly rather than returning fake data.
 
@@ -106,6 +106,7 @@ AeroNetra-computervision/
 │   ├── datasets/           # VisDrone + UAVDT parsing and YOLO conversion
 │   ├── visualization/      # Dataset plotting helpers
 │   ├── evaluation/         # Metrics, matching, stratified evaluation, JSON reports
+│   ├── tracking/           # Video tracking, persistent IDs, unique counts
 │   └── config.py           # Env-driven paths + YAML config loading
 ├── configs/                # Dataset + inference configuration (YAML)
 ├── notebooks/              # Local CPU workflows (00–08)
@@ -131,7 +132,8 @@ AeroNetra-computervision/
 | `evaluation/counting.py`    | Count-error metrics (MAE, RMSE, bias, MAPE)                                                           |
 | `evaluation/groundtruth.py` | Ground-truth loaders for YOLO and VisDrone labels                                                     |
 | `evaluation/strata.py`      | Stratified detection metrics by object size and image density                                         |
-| `tracking/ops.py`           | ByteTrack-based clip tracking (experimental; Kaggle notebook 05)                                      |
+| `tracking/ops.py`           | Tracker loop (ByteTrack/BoT-SORT), unique-vehicle counts, annotated video output                      |
+| `tracking/types.py`         | `TrackSummary` — unique counts plus the flicker they exclude                                          |
 | `utils/seeding.py`          | `set_seed()` — deterministic seeding for Python, NumPy and torch                                      |
 | `utils/paths.py`            | `ensure_dir()` — idempotent directory creation                                                        |
 | `utils/logs.py`             | `configure_logging()` — shared logging setup                                                          |
@@ -260,9 +262,9 @@ flowchart LR
 
 | Phase | Focus                                               | Status      |
 | ----- | --------------------------------------------------- | ----------- |
-| 1     | Static detection and image-level counting           | **Current** |
+| 1     | Static detection and image-level counting           | Done        |
 | 2     | Aerial fine-tuning and robustness across conditions | Planned     |
-| 3     | Video tracking and unique vehicle counts            | Planned     |
+| 3     | Video tracking and unique vehicle counts            | **Current** |
 | 4     | Traffic and geospatial analytics                    | Planned     |
 | 5     | UAV / edge integration                              | Planned     |
 
