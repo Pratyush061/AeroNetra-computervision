@@ -99,8 +99,7 @@ Test the trained model:
 ```bash
 python3 - <<'PY'
 from ultralytics import YOLO
-model_path =
-"/home/pratyush-jain/px4_ros2_ws/models/best.pt"
+model_path = "/home/pratyush-jain/px4_ros2_ws/models/best.pt"
 model = YOLO(model_path)
 print("MODEL LOAD: SUCCESS")
 print("Task:", model.task)
@@ -134,11 +133,6 @@ Create the detector:
 
 ```bash
 cat > ~/px4_ros2_ws/aeronetra_cv/yolo_car_detector.py <<'PY'
-```
-
-Replace the file with:
-
-```python
 #!/usr/bin/env python3
 import os
 import time
@@ -334,6 +328,10 @@ if __name__ == "__main__":
     main()
 PY
 ```
+
+{% hint style="info" %}
+The recorded model path is machine-specific. Point `YOLO_MODEL` (or the default in the file) at your own `best.pt`; the detector reads the `YOLO_MODEL` environment variable first.
+{% endhint %}
 
 Make it executable:
 
