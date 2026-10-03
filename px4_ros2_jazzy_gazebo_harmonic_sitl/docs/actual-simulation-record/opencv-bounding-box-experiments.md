@@ -8,6 +8,10 @@ description: >-
 
 These are kept as two separate experiments because they represent two stages of the actual simulation rather than duplicate implementations.
 
+{% hint style="info" %}
+Runnable copies of both experiments ship in the repository under `cv_nodes/` (`simple_bbox.py` for Experiment 1 and `vision_tracking.py` for Experiment 2). `scripts/setup_workspace.sh` places them at `~/px4_ros2_ws/cv_demo/`.
+{% endhint %}
+
 ## Experiment 1 — Reliable background bounding box
 
 The recorded procedure is:
@@ -271,7 +275,7 @@ For debugging, select `/vision/foreground_mask`. The inserted object should appe
 
 The second recorded version adds bounding box, object centre `(cx, cy)`, width and height, left/centre/right position, and the rough distance hint FAR / MEDIUM / CLOSE.
 
-### Replace `simple_bbox.py`
+### Replace `simple_bbox.py` (Experiment 2 ships as `vision_tracking.py`)
 
 ```python
 #!/usr/bin/env python3
