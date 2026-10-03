@@ -28,7 +28,9 @@ class OffboardControl(Node):
         # Configure QoS profile for PX4 topics
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
-            durability=DurabilityPolicy.VOLATILE, # PX4 uXRCE-DDS agent uses VOLATILE
+            # TRANSIENT_LOCAL matches PX4's own offboard example and is required for
+            # QoS compatibility with the uXRCE-DDS agent's subscribers.
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
             history=HistoryPolicy.KEEP_LAST,
             depth=1
         )
@@ -128,7 +130,7 @@ class OffboardControl(Node):
         """Publish the trajectory setpoint."""
         msg = TrajectorySetpoint()
         msg.position = [x, y, z]
-        msg.yaw = 0.0  # (90 degree)
+        msg.yaw = 0.0  # heading in radians (0 = north)
         msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
         self.trajectory_setpoint_publisher.publish(msg)
 
