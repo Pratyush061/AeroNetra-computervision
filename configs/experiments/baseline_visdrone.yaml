@@ -1,0 +1,13 @@
+# Baseline VisDrone comparison experiment.
+#
+# Ties the shared dataset and inference configs to the model configs so one
+# experiment record describes the whole comparison, per docs/EXPERIMENT_GUIDE.md.
+name: "baseline_visdrone"
+description: "Phase 1 baseline comparison of the YOLO-family and RT-DETR detectors on VisDrone."
+dataset: "configs/datasets/visdrone_yolo.yaml"
+inference: "configs/inference/inference.yaml"
+seed: 42
+models:
+  - "configs/models/yolov8n_visdrone.yaml"
+  - "configs/models/yolo11n_visdrone.yaml"
+  - "configs/models/rtdetr_l_visdrone.yaml"

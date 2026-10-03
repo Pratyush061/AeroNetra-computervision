@@ -152,3 +152,18 @@ def test_convert_uavdt_dataset_reports_missing_images(tmp_path):
 
     assert stats["missing_images"] == 1
     assert stats["total_images"] == 1
+
+
+def test_convert_uavdt_dataset_writes_sequence_manifest(tmp_path):
+    import json
+
+    images_root, gt_dir = _make_sequence(tmp_path)
+    output_dir = tmp_path / "out"
+
+    convert_uavdt_dataset(images_root, gt_dir, output_dir, mode="separate")
+
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    sequence = manifest["sequences"]["M0101"]
+    assert sequence["frames"] == [1, 2]
+    # Target 4 is a non-vehicle row and is not written, so it has no track.
+    assert sequence["tracks"] == {"1": [1], "2": [1], "3": [2]}

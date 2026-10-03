@@ -11,7 +11,10 @@ one ground-truth file per sequence rather than one label file per image.
    download. Treat the column mapping and class ids as provisional until they
    are checked against the actual dataset. The DET ``_gt_whole`` files are the
    intended source; the MOT (``*_gt.txt``) and ignore (``*_gt_ignore.txt``)
-   files are deliberately not read here.
+   files are deliberately not read here. Track identity (``target_id``) is
+   preserved in a ``manifest.json`` written next to the converted labels, so the
+   sequence structure is available to the later tracking phase even though the
+   MOT files are not read.
 
 Documented DET row format (``<sequence>_gt_whole.txt``)::
 
@@ -22,6 +25,7 @@ Vehicle categories are 1-based: 1 = car, 2 = truck, 3 = bus. Frames are stored
 as ``<images_root>/<sequence>/img<frame_index:06d>.jpg``.
 """
 
+import json
 import logging
 import os
 import shutil
@@ -140,6 +144,26 @@ def _image_size(path: Path) -> tuple[int, int] | None:
         return None
 
 
+def _sequence_manifest(written: dict[int, list[int]]) -> dict[str, object]:
+    """Summarise a sequence's written frames and per-track frame spans.
+
+    ``written`` maps each written frame index to the target ids it contains. The
+    result keeps the frame list and the frames each target id appears in, so the
+    track identity carried by the DET rows survives dataset preparation.
+    """
+    tracks: dict[int, list[int]] = {}
+    for frame_index, target_ids in written.items():
+        for target_id in target_ids:
+            tracks.setdefault(target_id, []).append(frame_index)
+    return {
+        "frames": sorted(written),
+        "tracks": {
+            str(target_id): sorted(frames)
+            for target_id, frames in sorted(tracks.items())
+        },
+    }
+
+
 def convert_uavdt_dataset(
     images_root: Path,
     gt_dir: Path,
@@ -180,6 +204,7 @@ def convert_uavdt_dataset(
         ensure_dir(out_images_dir)
         ensure_dir(out_labels_dir)
 
+    manifest: dict[str, object] = {}
     for gt_path in sorted(gt_dir.glob(f"*{_GT_SUFFIX}")):
         sequence = gt_path.name[: -len(_GT_SUFFIX)]
         stats["sequences"] += 1
@@ -201,6 +226,11 @@ def convert_uavdt_dataset(
                 {**parsed, "class_id": class_id}
             )
 
+        # ``written`` records, per written frame, the target ids present, so the
+        # manifest preserves the track identity the DET rows carry. Tracking is
+        # a later phase, but discarding this here would force the conversion to
+        # be redone then.
+        written: dict[int, list[int]] = {}
         for frame_index, objects in sorted(frames.items()):
             image_path = sequence_dir / f"img{frame_index:06d}.jpg"
             size = _image_size(image_path) if image_path.exists() else None
@@ -210,6 +240,7 @@ def convert_uavdt_dataset(
             img_width, img_height = size
 
             lines = []
+            target_ids = []
             for obj in objects:
                 yolo_box = convert_to_yolo_format(obj, img_width, img_height)
                 if yolo_box is None:
@@ -218,6 +249,7 @@ def convert_uavdt_dataset(
                 stats["valid_annotations"] += 1
                 xc, yc, w, h = yolo_box
                 lines.append(f"{obj['class_id']} {xc:.6f} {yc:.6f} {w:.6f} {h:.6f}\n")
+                target_ids.append(obj["target_id"])
 
             stats["total_images"] += 1
             if dry_run:
@@ -232,5 +264,14 @@ def convert_uavdt_dataset(
                     os.symlink(image_path.resolve(), out_image_path)
                 except OSError:
                     shutil.copy2(image_path, out_image_path)
+            written[frame_index] = target_ids
+
+        if not dry_run:
+            manifest[sequence] = _sequence_manifest(written)
+
+    if not dry_run and manifest:
+        (output_dir / "manifest.json").write_text(
+            json.dumps({"sequences": manifest}, indent=2), encoding="utf-8"
+        )
 
     return stats

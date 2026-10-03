@@ -1,0 +1,17 @@
+# Model + training configuration for the YOLOv8n baseline on VisDrone.
+#
+# These values mirror kaggle/02_model_training.ipynb so a run can be reproduced
+# from versioned files instead of reading hyperparameters out of notebook cells.
+model_name: "YOLOv8n"
+architecture: "yolov8n"   # Ultralytics model id / pretrained weights stem
+weights: "yolov8n.pt"     # COCO-pretrained initialisation
+adapter: "ultralytics"    # get_model_adapter() backend
+train:
+  data: "configs/datasets/visdrone_yolo.yaml"
+  epochs: 50
+  imgsz: 640
+  batch: -1               # auto batch size from GPU memory
+  patience: 10            # early-stopping patience
+  seed: 42
+  project: "${OUTPUT_DIR}"
+  name: "yolov8n_visdrone"

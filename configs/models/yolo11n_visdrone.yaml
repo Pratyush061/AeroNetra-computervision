@@ -1,0 +1,17 @@
+# Model + training configuration for the YOLO11n baseline on VisDrone.
+#
+# These values mirror kaggle/02_model_training.ipynb so a run can be reproduced
+# from versioned files instead of reading hyperparameters out of notebook cells.
+model_name: "YOLO11n"
+architecture: "yolo11n"
+weights: "yolo11n.pt"
+adapter: "ultralytics"
+train:
+  data: "configs/datasets/visdrone_yolo.yaml"
+  epochs: 50
+  imgsz: 640
+  batch: -1
+  patience: 10
+  seed: 42
+  project: "${OUTPUT_DIR}"
+  name: "yolo11n_visdrone"

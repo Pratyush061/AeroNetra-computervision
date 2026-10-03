@@ -47,8 +47,8 @@ Always run the validator before training.
 | Area                      | Current status                  |
 | ------------------------- | ------------------------------- |
 | Generic utilities package | Minimal/incomplete              |
-| Experiment configs        | Not fully populated             |
-| Model-specific configs    | Not fully populated             |
+| Experiment configs        | Baseline populated              |
+| Model-specific configs    | Baseline populated              |
 | Tracking                  | Not implemented in core Phase 1 |
 
 The **UAVDT parser** (`src/aeronetra/datasets/uavdt.py`) is implemented from the documented format and unit-tested, but it is not yet verified against a real download — treat its converted labels as provisional.
