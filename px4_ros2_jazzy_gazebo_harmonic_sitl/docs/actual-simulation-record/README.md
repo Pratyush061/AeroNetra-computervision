@@ -1,7 +1,7 @@
 ---
 description: >-
   Navigation hub for the actual AeroNetra PX4 SITL, Gazebo, ROS 2, OpenCV and
-  YOLO simulation documented in the provided PDF.
+  YOLO simulation documented in the recorded run.
 ---
 
 # Actual Simulation Record
@@ -22,7 +22,7 @@ Follow the pages in order. Each page answers one practical question and keeps it
 
 ## Environment recorded in the experiment
 
-The PDF records work across Ubuntu 24.04 Noble, ROS 2 Jazzy, PX4 SITL, Gazebo, the `gz_x500_depth` vehicle, the IMX214 camera, `rqt_image_view`, a VisDrone-trained `best.pt`, and a Prius model inserted through Gazebo Resource Spawner.
+The recorded run spans Ubuntu 24.04 Noble, ROS 2 Jazzy, PX4 SITL, Gazebo, the `gz_x500_depth` vehicle, the IMX214 camera, `rqt_image_view`, a VisDrone-trained `best.pt`, and a Prius model inserted through Gazebo Resource Spawner.
 
 ## Final architecture
 
