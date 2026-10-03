@@ -107,85 +107,78 @@ class BackgroundBoundingBox(Node):
                 frame,
                 learningRate=0.0,
             )
-
-        _, foreground_mask = cv2.threshold(
-            foreground_mask,
-            200,
-            255,
-            cv2.THRESH_BINARY,
-        )
-
-        opening_kernel = cv2.getStructuringElement(
-            cv2.MORPH_ELLIPSE,
-            (5, 5),
-        )
-        closing_kernel = cv2.getStructuringElement(
-            cv2.MORPH_RECT,
-            (15, 15),
-        )
-
-        foreground_mask = cv2.morphologyEx(
-            foreground_mask,
-            cv2.MORPH_OPEN,
-            opening_kernel,
-            iterations=1,
-        )
-        foreground_mask = cv2.morphologyEx(
-            foreground_mask,
-            cv2.MORPH_CLOSE,
-            closing_kernel,
-            iterations=2,
-        )
-
-        contours, _ = cv2.findContours(
-            foreground_mask,
-            cv2.RETR_EXTERNAL,
-            cv2.CHAIN_APPROX_SIMPLE,
-        )
-
-        valid_contours = []
-        for contour in contours:
-            contour_area = cv2.contourArea(contour)
-            if contour_area < self.MIN_CONTOUR_AREA:
-                continue
-            x, y, box_width, box_height = cv2.boundingRect(contour)
-            box_area = box_width * box_height
-            # Ignore nearly full-frame changes.
-            if box_area > frame_area * 0.80:
-                continue
-            valid_contours.append(contour)
-
-        if valid_contours:
-            largest_contour = max(
-                valid_contours,
-                key=cv2.contourArea,
+            _, foreground_mask = cv2.threshold(
+                foreground_mask,
+                200,
+                255,
+                cv2.THRESH_BINARY,
             )
+            opening_kernel = cv2.getStructuringElement(
+                cv2.MORPH_ELLIPSE,
+                (5, 5),
+            )
+            closing_kernel = cv2.getStructuringElement(
+                cv2.MORPH_RECT,
+                (15, 15),
+            )
+            foreground_mask = cv2.morphologyEx(
+                foreground_mask,
+                cv2.MORPH_OPEN,
+                opening_kernel,
+                iterations=1,
+            )
+            foreground_mask = cv2.morphologyEx(
+                foreground_mask,
+                cv2.MORPH_CLOSE,
+                closing_kernel,
+                iterations=2,
+            )
+            contours, _ = cv2.findContours(
+                foreground_mask,
+                cv2.RETR_EXTERNAL,
+                cv2.CHAIN_APPROX_SIMPLE,
+            )
+            valid_contours = []
+            for contour in contours:
+                contour_area = cv2.contourArea(contour)
+                if contour_area < self.MIN_CONTOUR_AREA:
+                    continue
+                x, y, box_width, box_height = cv2.boundingRect(contour)
+                box_area = box_width * box_height
+                # Ignore nearly full-frame changes.
+                if box_area > frame_area * 0.80:
+                    continue
+                valid_contours.append(contour)
 
-            x, y, box_width, box_height = cv2.boundingRect(
-                largest_contour
-            )
-
-            cv2.rectangle(
-                frame,
-                (x, y),
-                (x + box_width, y + box_height),
-                (0, 255, 0),
-                4,
-            )
-            cv2.putText(
-                frame,
-                "NEW OBJECT",
-                (x, max(30, y - 10)),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.8,
-                (0, 255, 0),
-                2,
-            )
-            status = "OBJECT DETECTED"
-            status_colour = (0, 255, 0)
-        else:
-            status = "READY - INSERT AN OBJECT"
-            status_colour = (0, 255, 255)
+            if valid_contours:
+                largest_contour = max(
+                    valid_contours,
+                    key=cv2.contourArea,
+                )
+                x, y, box_width, box_height = cv2.boundingRect(
+                    largest_contour
+                )
+                cv2.rectangle(
+                    frame,
+                    (x, y),
+                    (x + box_width, y + box_height),
+                    (0, 255, 0),
+                    4,
+                )
+                cv2.putText(
+                    frame,
+                    "NEW OBJECT",
+                    (x, max(30, y - 10)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.8,
+                    (0, 255, 0),
+                    2,
+                )
+                status = "OBJECT DETECTED"
+                status_colour = (0, 255, 0)
+            else:
+                status = "READY - INSERT AN OBJECT"
+                status_colour = (0, 255, 255)
 
         # This text proves that you are viewing the annotated topic.
         cv2.rectangle(
@@ -224,17 +217,18 @@ class BackgroundBoundingBox(Node):
                 f"Could not publish processed image: {error}"
             )
 
-    def main() -> None:
-        rclpy.init()
-        node = BackgroundBoundingBox()
-        try:
-            rclpy.spin(node)
-        except KeyboardInterrupt:
-            pass
-        finally:
-            node.destroy_node()
-            if rclpy.ok():
-                rclpy.shutdown()
+
+def main() -> None:
+    rclpy.init()
+    node = BackgroundBoundingBox()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":
@@ -347,140 +341,135 @@ class VisionTrackingNode(Node):
                 frame,
                 learningRate=0.0,
             )
-
-        _, foreground_mask = cv2.threshold(
-            foreground_mask,
-            200,
-            255,
-            cv2.THRESH_BINARY,
-        )
-
-        open_kernel = cv2.getStructuringElement(
-            cv2.MORPH_ELLIPSE,
-            (5, 5),
-        )
-        close_kernel = cv2.getStructuringElement(
-            cv2.MORPH_RECT,
-            (15, 15),
-        )
-
-        foreground_mask = cv2.morphologyEx(
-            foreground_mask,
-            cv2.MORPH_OPEN,
-            open_kernel,
-            iterations=1,
-        )
-        foreground_mask = cv2.morphologyEx(
-            foreground_mask,
-            cv2.MORPH_CLOSE,
-            close_kernel,
-            iterations=2,
-        )
-
-        contours, _ = cv2.findContours(
-            foreground_mask,
-            cv2.RETR_EXTERNAL,
-            cv2.CHAIN_APPROX_SIMPLE,
-        )
-
-        valid_contours = []
-        for contour in contours:
-            contour_area = cv2.contourArea(contour)
-            if contour_area < self.MIN_CONTOUR_AREA:
-                continue
-            x, y, box_width, box_height = cv2.boundingRect(contour)
-            box_area = box_width * box_height
-            if box_area > image_area * 0.80:
-                continue
-            valid_contours.append(contour)
-
-        if valid_contours:
-            largest_contour = max(
-                valid_contours,
-                key=cv2.contourArea,
+            _, foreground_mask = cv2.threshold(
+                foreground_mask,
+                200,
+                255,
+                cv2.THRESH_BINARY,
             )
-            x, y, box_width, box_height = cv2.boundingRect(
-                largest_contour
+            open_kernel = cv2.getStructuringElement(
+                cv2.MORPH_ELLIPSE,
+                (5, 5),
             )
-            centre_x = x + box_width // 2
-            centre_y = y + box_height // 2
+            close_kernel = cv2.getStructuringElement(
+                cv2.MORPH_RECT,
+                (15, 15),
+            )
+            foreground_mask = cv2.morphologyEx(
+                foreground_mask,
+                cv2.MORPH_OPEN,
+                open_kernel,
+                iterations=1,
+            )
+            foreground_mask = cv2.morphologyEx(
+                foreground_mask,
+                cv2.MORPH_CLOSE,
+                close_kernel,
+                iterations=2,
+            )
+            contours, _ = cv2.findContours(
+                foreground_mask,
+                cv2.RETR_EXTERNAL,
+                cv2.CHAIN_APPROX_SIMPLE,
+            )
+            valid_contours = []
+            for contour in contours:
+                contour_area = cv2.contourArea(contour)
+                if contour_area < self.MIN_CONTOUR_AREA:
+                    continue
+                x, y, box_width, box_height = cv2.boundingRect(contour)
+                box_area = box_width * box_height
+                if box_area > image_area * 0.80:
+                    continue
+                valid_contours.append(contour)
 
-            if centre_x < image_width / 3:
-                horizontal_position = "LEFT"
-            elif centre_x > (2 * image_width) / 3:
-                horizontal_position = "RIGHT"
+            if valid_contours:
+                largest_contour = max(
+                    valid_contours,
+                    key=cv2.contourArea,
+                )
+                x, y, box_width, box_height = cv2.boundingRect(
+                    largest_contour
+                )
+                centre_x = x + box_width // 2
+                centre_y = y + box_height // 2
+
+                if centre_x < image_width / 3:
+                    horizontal_position = "LEFT"
+                elif centre_x > (2 * image_width) / 3:
+                    horizontal_position = "RIGHT"
+                else:
+                    horizontal_position = "CENTRE"
+
+                box_area_ratio = (
+                    box_width * box_height
+                ) / image_area
+                if box_area_ratio < 0.05:
+                    distance_hint = "FAR"
+                elif box_area_ratio < 0.20:
+                    distance_hint = "MEDIUM"
+                else:
+                    distance_hint = "CLOSE"
+
+                cv2.rectangle(
+                    frame,
+                    (x, y),
+                    (x + box_width, y + box_height),
+                    (0, 255, 0),
+                    4,
+                )
+                cv2.circle(
+                    frame,
+                    (centre_x, centre_y),
+                    7,
+                    (0, 0, 255),
+                    -1,
+                )
+                cv2.line(
+                    frame,
+                    (image_width // 2, 0),
+                    (image_width // 2, image_height),
+                    (255, 0, 0),
+                    2,
+                )
+                cv2.putText(
+                    frame,
+                    f"Position: {horizontal_position}",
+                    (x, max(30, y - 55)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (0, 255, 0),
+                    2,
+                )
+                cv2.putText(
+                    frame,
+                    f"Centre: ({centre_x}, {centre_y})",
+                    (x, max(30, y - 30)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.65,
+                    (0, 255, 0),
+                    2,
+                )
+                cv2.putText(
+                    frame,
+                    f"Size: {box_width}x{box_height} | {distance_hint}",
+                    (x, max(30, y - 5)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.65,
+                    (0, 255, 0),
+                    2,
+                )
+                status = "OBJECT TRACKED"
+                status_colour = (0, 255, 0)
+                self.get_logger().info(
+                    f"Object {horizontal_position} | "
+                    f"centre=({centre_x}, {centre_y}) | "
+                    f"size={box_width}x{box_height} | "
+                    f"distance={distance_hint}"
+                )
             else:
-                horizontal_position = "CENTRE"
-
-            box_area_ratio = (
-                box_width * box_height
-            ) / image_area
-            if box_area_ratio < 0.05:
-                distance_hint = "FAR"
-            elif box_area_ratio < 0.20:
-                distance_hint = "MEDIUM"
-            else:
-                distance_hint = "CLOSE"
-
-            cv2.rectangle(
-                frame,
-                (x, y),
-                (x + box_width, y + box_height),
-                (0, 255, 0),
-                4,
-            )
-            cv2.circle(
-                frame,
-                (centre_x, centre_y),
-                7,
-                (0, 0, 255),
-                -1,
-            )
-            cv2.line(
-                frame,
-                (image_width // 2, 0),
-                (image_width // 2, image_height),
-                (255, 0, 0),
-                2,
-            )
-            cv2.putText(
-                frame,
-                f"Position: {horizontal_position}",
-                (x, max(30, y - 55)),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (0, 255, 0),
-                2,
-            )
-            cv2.putText(
-                frame,
-                f"Centre: ({centre_x}, {centre_y})",
-                (x, max(30, y - 30)),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.65,
-                (0, 255, 0),
-                2,
-            )
-            cv2.putText(
-                frame,
-                f"Size: {box_width}x{box_height} | {distance_hint}",
-                (x, max(30, y - 5)),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.65,
-                (0, 255, 0),
-                2,
-            )
-            status = "OBJECT TRACKED"
-            status_colour = (0, 255, 0)
-            self.get_logger().info(
-                f"Object {horizontal_position} | "
-                f"centre=({centre_x}, {centre_y}) | "
-                f"size={box_width}x{box_height} | "
-                f"distance={distance_hint}"
-            )
-        else:
-            status = "READY - INSERT OBJECT"
-            status_colour = (0, 255, 255)
+                status = "READY - INSERT OBJECT"
+                status_colour = (0, 255, 255)
 
         cv2.rectangle(
             frame,
@@ -511,17 +500,18 @@ class VisionTrackingNode(Node):
                 f"Annotated image publishing failed: {error}"
             )
 
-    def main() -> None:
-        rclpy.init()
-        node = VisionTrackingNode()
-        try:
-            rclpy.spin(node)
-        except KeyboardInterrupt:
-            pass
-        finally:
-            node.destroy_node()
-            if rclpy.ok():
-                rclpy.shutdown()
+
+def main() -> None:
+    rclpy.init()
+    node = VisionTrackingNode()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":
