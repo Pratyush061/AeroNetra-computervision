@@ -61,36 +61,22 @@ Nothing here fabricates results: unimplemented modules fail loudly rather than r
 ## 🏗️ Architecture
 
 ```mermaid
-flowchart LR
-    A[Aerial / UAV image] --> B[BaseDetector interface]
-
-    B --> U[UltralyticsAdapter]
-    B --> O[OnnxRuntimeAdapter]
-
-    U -. supports .-> Y["YOLO family<br/>(YOLOv8 / YOLO11 / YOLO26)"]
-    U -. supports .-> R[RT-DETR]
-    O -. runs .-> X["Exported ONNX detector<br/>(ONNX Runtime)"]
-
+flowchart TD
+    A[Aerial / UAV image] --> B[Detector interface]
+    B --> U["UltralyticsAdapter<br/>YOLO / RT-DETR"]
+    B --> O["OnnxRuntimeAdapter<br/>ONNX detectors"]
     U --> C[Standardized ModelPrediction]
     O --> C
-
-    C --> P["Post-processing<br/>(conf / class / area / aspect-ratio / ROI + NMS)"]
-    C --> G["Evaluation + Ground Truth"]
-
-    P --> E[Vehicle counting]
-    P --> V[Visualization & export]
-
-    G --> M["Precision / Recall / F1<br/>mAP@50 / mAP@50-95"]
-    G --> K["Count error<br/>Stratified metrics"]
-
-    E --> RPT[Experiment report / analysis]
-    V --> RPT
-    M --> RPT
-    K --> RPT
+    C --> P["Post-processing<br/>confidence / class / area / ROI"]
+    C --> G["Evaluation + ground truth"]
+    P --> V[Vehicle counting]
+    V --> W[Visualization & export]
+    G --> M["Precision / Recall / F1<br/>mAP@50 / mAP@50-95<br/>Count error / stratified metrics"]
+    W --> R[Experiment report / analysis]
+    M --> R
 ```
 
-The critical boundary is the **detector adapter**. The adapters accept framework/model-specific inputs and normalize inference results into shared prediction objects so nothing downstream needs to know whether the detector came from Ultralytics or ONNX Runtime, or whether it is a YOLO-family or transformer-based model. This is what makes the pipeline modular and extensible.
-
+The detector adapters normalize model-specific outputs into a shared `ModelPrediction`. Post-processing feeds vehicle counting and visualization/export, while evaluation compares predictions with ground truth and reports detection and counting metrics. Both paths contribute to the experiment analysis.
 ***
 
 ## 🗂️ Repository layout
