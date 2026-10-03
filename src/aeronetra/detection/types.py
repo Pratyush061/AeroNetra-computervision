@@ -105,3 +105,34 @@ class InferenceMetadata:
     seed: int
     device: str
     timing_ms: float = 0.0
+
+
+@dataclass
+class TrackedDetection:
+    """A detection carrying a persistent identity for one video frame.
+
+    Tracking is association layered on detection: the box, class and confidence
+    still come from the detector, and ``track_id`` is what the tracker adds so
+    the same vehicle keeps one identity across frames. The detection is held
+    whole rather than copied field by field, so box validation stays in one
+    place and a tracked detection cannot drift from a plain one.
+    """
+    detection: Detection
+    track_id: int
+    frame_index: int = 0
+
+    @property
+    def box(self) -> BoundingBox:
+        return self.detection.box
+
+    @property
+    def class_id(self) -> int:
+        return self.detection.class_id
+
+    @property
+    def class_name(self) -> str:
+        return self.detection.class_name
+
+    @property
+    def confidence(self) -> float:
+        return self.detection.confidence

@@ -1,0 +1,47 @@
+# ByteTrack configuration for AeroNetra video tracking (Phase 3).
+#
+# ByteTrack is the default tracker: a linear Kalman filter plus IoU association,
+# with a two-stage pass that rescues low-confidence boxes. It has no appearance
+# model, which makes it the lightest of the trackers Ultralytics ships and the
+# fastest in the published VisDrone-MOT comparison.
+#
+# Alternatives use the same interface, selected with --tracker:
+#   botsort.yaml     most accurate on UAV footage; compensates for camera motion
+#                    (gmc_method) and optionally uses ReID, at roughly 4x the
+#                    runtime of ByteTrack
+#   ocsort.yaml      observation-centric Kalman; no camera-motion compensation
+#   deepocsort.yaml  OC-SORT plus optional appearance matching
+#   fasttrack.yaml   Kalman rollback and box enlargement under occlusion
+#   tracktrack.yaml  multi-cue association; the Ultralytics default, heavier
+#
+# The values below follow the Ultralytics defaults. The comments record why each
+# one matters for aerial footage rather than restating the upstream docs.
+
+tracker_type: bytetrack
+
+# First-association threshold. Lowering it admits weaker detections into an
+# existing track, which helps small distant vehicles but risks binding noise to
+# a track that is already there.
+track_high_thresh: 0.25
+
+# Second-association threshold over low-confidence boxes. This is the "rescue"
+# pass that keeps a vehicle alive through a partial occlusion, so it is set well
+# below the first threshold on purpose.
+track_low_thresh: 0.1
+
+# IoU below which a detection may start a new track. Raising it reduces false
+# tracks (a spurious box is less likely to become an id) at the cost of
+# fragmenting genuine tracks.
+new_track_thresh: 0.25
+
+# Frames a lost track is kept alive before removal. Aerial vehicles pass behind
+# trees, buildings and other vehicles; set too low, a single occlusion is
+# counted as two vehicles in the unique total.
+track_buffer: 30
+
+# IoU threshold for the association match itself.
+match_thresh: 0.8
+
+# Fuse the detection score with motion/IoU when matching, which stabilises
+# weak detections instead of trusting confidence alone.
+fuse_score: True

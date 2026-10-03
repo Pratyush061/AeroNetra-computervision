@@ -19,6 +19,7 @@ Local (no GPU)                          Kaggle (GPU)
                                                     ↓
                                         03 → Evaluate models (mAP, precision, recall)
                                         04 → Run multi-model inference comparison
+                                        05 → Track a clip (ByteTrack) → unique vehicle count
                                                     ↓
 Download best.pt weights ←───────────── Download from notebook output
         ↓
@@ -36,6 +37,7 @@ Use in local notebooks 03–06
 | 02 | `02_model_training.ipynb` | **Yes** | Fine-tune YOLOv8n, YOLO11n, RT-DETR-l on VisDrone |
 | 03 | `03_model_evaluation.ipynb` | **Yes** | Compute mAP@50, mAP@50-95, precision, recall |
 | 04 | `04_inference_comparison.ipynb` | **Yes** | Side-by-side inference with all models |
+| 05 | `05_video_tracking.ipynb` | **Yes** | Track a clip with ByteTrack and report the unique vehicle count |
 
 ---
 
@@ -72,7 +74,14 @@ Add the public VisDrone dataset to Kaggle:
 2. Enable GPU
 3. Run notebooks — results saved to `/kaggle/working/`
 
-### Step 5: Use Weights Locally
+### Step 5: Run Notebook 05 (Video Tracking)
+
+1. Create a new Kaggle notebook
+2. Add datasets: `aeronetra-trained-weights` and a clip dataset named `aeronetra-video-clip` (a short `.mp4` you upload yourself)
+3. Enable GPU
+4. Upload `05_video_tracking.ipynb` and run all cells — the annotated video and the unique count are written to `/kaggle/working/`
+
+### Step 6: Use Weights Locally
 
 Place downloaded `.pt` files in your local project:
 
