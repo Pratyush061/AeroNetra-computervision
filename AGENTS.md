@@ -43,6 +43,7 @@ This repository is **AeroNetra**, a computer-vision research project for UAV/dro
 │   │   ├── counting.py
 │   │   ├── groundtruth.py
 │   │   ├── report.py
+│   │   ├── strata.py
 │   │   └── types.py
 │   └── utils/
 │       ├── seeding.py
@@ -68,14 +69,14 @@ This repository is **AeroNetra**, a computer-vision research project for UAV/dro
     └── ros2_ws/
 ```
 
-### Stubs that are not implemented
+### Configs: baseline only
 
-Never fabricate implementations or claim these work:
+Never claim more config coverage than exists:
 
-| Path                              | Status                             |
-| --------------------------------- | ---------------------------------- |
-| `configs/experiments/`            | No experiment configs yet          |
-| `configs/models/`                 | No model configs yet               |
+| Path                   | Status                                                 |
+| ---------------------- | ------------------------------------------------------ |
+| `configs/experiments/` | Baseline only (`baseline_visdrone.yaml`)                |
+| `configs/models/`      | Baseline only (YOLOv8n, YOLO11n, RT-DETR-l on VisDrone) |
 
 ***
 

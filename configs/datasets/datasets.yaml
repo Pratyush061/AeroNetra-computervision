@@ -44,7 +44,7 @@ datasets:
       UAVDT/
       ├── UAV-benchmark-M/
       └── UAV-benchmark-MOTD_v1.0/
-    conversion_status: "Pending implementation"
+    conversion_status: "Implemented (unit-tested; not verified against a real download)"
     limitations: "Different annotation format from VisDrone, tracking focus but usable for detection."
 
   - name: UA-DETRAC
