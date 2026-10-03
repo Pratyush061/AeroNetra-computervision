@@ -28,7 +28,7 @@ Environment recorded in the experiment:
 * PX4 vehicle: `gz_x500_depth`
 * ROS 2 bridge: Micro XRCE-DDS Agent
 
-The PDF records the following failure after PX4 SITL and Gazebo were otherwise running correctly:
+The recorded run produced the following failure after PX4 SITL and Gazebo were otherwise running correctly:
 
 ```
 commander takeoff
@@ -165,7 +165,7 @@ python3 \
 
 ## `/vision/annotated` updates but no car is detected
 
-The PDF records these likely causes:
+The recorded run lists these likely causes:
 
 * car is too small;
 * car is partially outside the frame;
